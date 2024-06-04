@@ -1,9 +1,18 @@
 import 'package:alive_app/components/login/login.dart';
-import 'package:alive_app/components/student_section/assignment.dart';
-import 'package:alive_app/components/student_section/faqs.dart';
-import 'package:alive_app/components/student_section/std_home.dart';
-import 'package:alive_app/components/student_section/study_material.dart';
-import 'package:alive_app/components/student_section/subjects.dart';
+import 'package:alive_app/components/student_section/modules/academics.dart';
+import 'package:alive_app/components/student_section/modules/ai.dart';
+import 'package:alive_app/components/student_section/modules/assignment.dart';
+import 'package:alive_app/components/student_section/modules/discussions/explore.dart';
+import 'package:alive_app/components/student_section/modules/discussions/my_discussions.dart';
+import 'package:alive_app/components/student_section/modules/exam/exams.dart';
+import 'package:alive_app/components/student_section/modules/exam/scores.dart';
+import 'package:alive_app/components/student_section/modules/faqs.dart';
+import 'package:alive_app/components/student_section/modules/resume.dart';
+import 'package:alive_app/components/student_section/modules/std_home.dart';
+import 'package:alive_app/components/student_section/modules/study_material.dart';
+import 'package:alive_app/components/student_section/modules/subjects.dart';
+import 'package:alive_app/components/student_section/custom_app_bar.dart';
+import 'package:alive_app/components/student_section/custom_drawer.dart';
 import 'package:flutter/material.dart';
 
 class Student extends StatefulWidget {
@@ -16,11 +25,19 @@ class Student extends StatefulWidget {
 class _StudentState extends State<Student> {
   bool _isDarkMode = false;
   int _selectedDrawerIndex = 0;
+
   final drawerItems = [
     'Home',
     'Subjects',
     'Study Material',
     'Assignment',
+    'Exams',
+    'Scores',
+    'Explore-Discussions',
+    'My Discussions',
+    'Resume Builder',
+    'AI Tutor',
+    'Academics',
     'FAQs',
   ];
 
@@ -29,6 +46,13 @@ class _StudentState extends State<Student> {
     Icons.menu_book_sharp,
     Icons.sticky_note_2_outlined,
     Icons.note_alt_outlined,
+    Icons.assignment,
+    Icons.school_outlined,
+    Icons.people_outline,
+    Icons.mark_chat_read_outlined,
+    Icons.spatial_tracking_outlined,
+    Icons.person_pin_outlined,
+    Icons.cyclone_sharp,
     Icons.question_mark_sharp,
   ];
 
@@ -43,204 +67,73 @@ class _StudentState extends State<Student> {
       case 3:
         return const Assignment();
       case 4:
+        return const Exams();
+      case 5:
+        return const Scores();
+      case 6:
+        return const Explore();
+      case 7:
+        return const MyDiscussions();
+      case 8:
+        return const Resume();
+      case 9:
+        return const Ai();
+      case 10:
+        return const Academics();
+      case 11:
         return const FAQ();
-
       default:
-        return const std_home();
+        return const Text('Error');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: Builder(
-          builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: Colors.black),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        title: Text(
-          drawerItems[_selectedDrawerIndex],
-          style: const TextStyle(color: Colors.black),
-        ),
-        backgroundColor: Colors.white,
-        actions: <Widget>[
-          IconButton(
-            icon: const Icon(Icons.settings, color: Colors.black),
-            onPressed: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Settings'),
-                    content: SwitchListTile(
-                      title: const Text('Dark Mode'),
-                      value: _isDarkMode,
-                      onChanged: (bool value) {
-                        setState(() {
-                          _isDarkMode = value;
-                        });
-                      },
-                    ),
-                  );
-                },
-              );
-            },
-          ),
-          GestureDetector(
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    title: const Text('Profile'),
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min, // Add this line
-                      children: <Widget>[
-                        const CircleAvatar(
-                          backgroundColor: Colors.grey,
-                          child: Text(
-                            'Y',
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                        const Text('Name'),
-                        Row(
-                          children: <Widget>[
-                            const Icon(Icons.logout, color: Colors.red),
-                            GestureDetector(
-                              onTap: () {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => const Login()),
-                                );
-                              },
-                              child: const Text('Logout',
-                                  style: TextStyle(color: Colors.red)),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              );
-            },
-            child: const CircleAvatar(
-              backgroundColor: Colors.grey,
-              child: Text(
-                'Y',
-                style: TextStyle(color: Colors.white),
-              ),
+    return Theme(
+      data: _isDarkMode
+          ? ThemeData(
+              primaryColor: Colors.white,
+              colorScheme: const ColorScheme.dark()
+                  .copyWith(secondary: Colors.white)
+                  .copyWith(surface: Colors.black),
+            )
+          : ThemeData(
+              primaryColor: Colors.grey[800],
+              colorScheme: const ColorScheme.light()
+                  .copyWith(secondary: Colors.grey[400])
+                  .copyWith(surface: Colors.white),
             ),
-          ),
-        ],
-      ),
-      drawer: Drawer(
-        child: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                Color(0xFF030034),
-                Color(0xFF040042),
-                Color(0xFF06005B),
-              ],
-            ),
-          ),
-          child: ListView(
-            padding: EdgeInsets.zero,
-            children: <Widget>[
-              SizedBox(
-                height: 150,
-                child: SizedBox(
-                  height: 150,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: <Widget>[
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Image.asset(
-                              'assets/alivelogo.png',
-                              fit: BoxFit.contain,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Alive',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 25,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                            Text(
-                              "Digital Classrooms",
-                              style: TextStyle(
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              ...List.generate(drawerItems.length, (index) {
-                return Container(
-                  decoration: BoxDecoration(
-                    color: _selectedDrawerIndex == index
-                        ? const Color(0xFFEEBBC2)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(07.0),
-                  ),
-                  margin: const EdgeInsets.all(8.0),
-                  child: ListTile(
-                    leading: Icon(drawerIcons[index],
-                        color: _selectedDrawerIndex == index
-                            ? const Color(0xfff161b44)
-                            : Colors.white,
-                        size: 25),
-                    title: Text(
-                      drawerItems[index],
-                      style: TextStyle(
-                          color: _selectedDrawerIndex == index
-                              ? const Color(0xFF161B44)
-                              : Colors.white,
-                          fontWeight: FontWeight.w500),
-                    ),
-                    onTap: () {
-                      setState(() {
-                        _selectedDrawerIndex = index;
-                      });
-                      Navigator.pop(context);
-                    },
-                  ),
-                );
-              }),
-            ],
-          ),
+      child: Scaffold(
+        appBar: CustomAppBar(
+          isDarkMode: _isDarkMode,
+          selectedDrawerIndex: _selectedDrawerIndex,
+          drawerItems: drawerItems,
+          onDarkModeToggle: (value) {
+            setState(() {
+              _isDarkMode = value;
+            });
+          },
+          onLogout: () {
+            Navigator.pushAndRemoveUntil(context,
+                MaterialPageRoute(builder: (BuildContext context) {
+              return const Login();
+            }), (r) {
+              return false;
+            });
+          },
         ),
+        drawer: CustomDrawer(
+          selectedDrawerIndex: _selectedDrawerIndex,
+          drawerItems: drawerItems,
+          drawerIcons: drawerIcons,
+          onItemSelected: (index) {
+            setState(() {
+              _selectedDrawerIndex = index;
+            });
+          },
+        ),
+        body: _getDrawerItemWidget(_selectedDrawerIndex),
       ),
-      body: _getDrawerItemWidget(_selectedDrawerIndex),
     );
   }
 }
