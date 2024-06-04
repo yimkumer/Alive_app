@@ -36,6 +36,13 @@ class _CustomAppBarState extends State<CustomAppBar> {
         _buildSettingsButton(context),
         _buildProfileButton(context),
       ],
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1.0),
+        child: Container(
+          color: Colors.black,
+          height: 0.2,
+        ),
+      ),
     );
   }
 
@@ -52,8 +59,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       onPressed: () {
         showMenu(
           context: context,
-          position: const RelativeRect.fromLTRB(
-              150.0, 100.0, -50.0, 0.0), // adjust these as needed
+          position: const RelativeRect.fromLTRB(150.0, 100.0, -50.0, 0.0),
           items: [
             PopupMenuItem(
               child: StatefulBuilder(

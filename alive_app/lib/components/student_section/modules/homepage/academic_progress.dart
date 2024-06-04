@@ -7,9 +7,9 @@ class AcademicProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: const Color.fromARGB(255, 243, 239, 239),
+      color: const Color.fromARGB(255, 248, 247, 247),
       margin: const EdgeInsets.all(10),
-      elevation: 5,
+      elevation: 2,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(15),
       ),
@@ -19,9 +19,12 @@ class AcademicProgress extends StatelessWidget {
           children: [
             const Align(
               alignment: Alignment.topLeft,
-              child: Text(
-                'Academic Progress',
-                style: TextStyle(color: Color(0xFF05004E), fontSize: 20),
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 5),
+                child: Text(
+                  'Academic Progress',
+                  style: TextStyle(color: Color(0xFF05004E), fontSize: 20),
+                ),
               ),
             ),
             Row(
@@ -32,7 +35,7 @@ class AcademicProgress extends StatelessWidget {
                       buildButton('Overall'),
                       buildButton('Year'),
                       buildButton('Required'),
-                      buildButton('Completed'),
+                      buildButton('Complete'),
                     ],
                   ),
                 ),

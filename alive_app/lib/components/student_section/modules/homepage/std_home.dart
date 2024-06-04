@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'leaderboard.dart';
 import 'welcome_text.dart';
 import 'profile_section.dart';
 import 'academic_progress.dart';
@@ -15,6 +16,7 @@ class std_home extends StatelessWidget {
             WelcomeText(),
             ProfileSection(),
             AcademicProgress(),
+            Leaderboard(),
           ],
         ),
       ),
