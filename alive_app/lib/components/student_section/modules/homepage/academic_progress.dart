@@ -7,6 +7,7 @@ class AcademicProgress extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
+      color: const Color.fromARGB(255, 243, 239, 239),
       margin: const EdgeInsets.all(10),
       elevation: 5,
       shape: RoundedRectangleBorder(

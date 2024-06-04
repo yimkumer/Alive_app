@@ -12,12 +12,18 @@ class Login extends StatefulWidget {
 }
 
 class _LoginState extends State<Login> {
-  final bool _obscureText = true;
+  bool _obscureText = true;
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
   int _currentTabIndex = 0;
   bool _isLoading = false;
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,6 +56,7 @@ class _LoginState extends State<Login> {
                 formKey: _formKey,
                 usernameController: _usernameController,
                 passwordController: _passwordController,
+                onTogglePasswordVisibility: _togglePasswordVisibility,
                 obscureText: _obscureText,
                 onLogin: (username, password) {
                   if (username.isEmpty || password.isEmpty) {

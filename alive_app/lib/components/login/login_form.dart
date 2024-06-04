@@ -6,6 +6,7 @@ class LoginForm extends StatelessWidget {
   final TextEditingController passwordController;
   final bool obscureText;
   final Function(String, String) onLogin;
+  final Function onTogglePasswordVisibility;
 
   const LoginForm({
     super.key,
@@ -14,6 +15,7 @@ class LoginForm extends StatelessWidget {
     required this.passwordController,
     required this.obscureText,
     required this.onLogin,
+    required this.onTogglePasswordVisibility,
   });
 
   @override
@@ -66,7 +68,7 @@ class LoginForm extends StatelessWidget {
                       icon: Icon(obscureText
                           ? Icons.visibility
                           : Icons.visibility_off),
-                      onPressed: () {},
+                      onPressed: () => onTogglePasswordVisibility(),
                     ),
                   ),
                   validator: (value) {
