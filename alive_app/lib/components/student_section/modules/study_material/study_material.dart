@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
+import 'package:http/http.dart' as http;
 
 class StudyMaterial extends StatefulWidget {
   const StudyMaterial({super.key});
