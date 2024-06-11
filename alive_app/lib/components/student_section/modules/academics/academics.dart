@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 
-class Academics extends StatelessWidget {
-  const Academics({super.key});
+class Academics extends StatefulWidget {
+  final String token;
+  const Academics({super.key, required this.token});
+
+  @override
+  State<Academics> createState() => _AcademicsState();
+}
+
+class _AcademicsState extends State<Academics> {
+  @override
+  void initState() {
+    super.initState();
+    print('Token: ${widget.token}');
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -16,7 +16,9 @@ import 'package:alive_app/components/student_section/custom_drawer.dart';
 import 'package:flutter/material.dart';
 
 class Student extends StatefulWidget {
-  const Student({super.key});
+  final String token;
+
+  const Student({super.key, required this.token});
 
   @override
   _StudentState createState() => _StudentState();
@@ -56,32 +58,43 @@ class _StudentState extends State<Student> {
     Icons.question_mark_sharp,
   ];
 
+  @override
+  void initState() {
+    super.initState();
+    print('Token: ${widget.token}');
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Login Success')),
+      );
+    });
+  }
+
   Widget _getDrawerItemWidget(int pos) {
     switch (pos) {
       case 0:
-        return const std_home();
+        return std_home(token: widget.token);
       case 1:
-        return const Subjects();
+        return Subjects(token: widget.token);
       case 2:
-        return const StudyMaterial();
+        return StudyMaterial(token: widget.token);
       case 3:
-        return const Assignment();
+        return Assignment(token: widget.token);
       case 4:
-        return const Exams();
+        return Exams(token: widget.token);
       case 5:
-        return const Scores();
+        return Scores(token: widget.token);
       case 6:
-        return const Explore();
+        return Explore(token: widget.token);
       case 7:
-        return const MyDiscussions();
+        return MyDiscussions(token: widget.token);
       case 8:
-        return const Resume();
+        return Resume(token: widget.token);
       case 9:
-        return const Ai();
+        return Ai(token: widget.token);
       case 10:
-        return const Academics();
+        return Academics(token: widget.token);
       case 11:
-        return const FAQ();
+        return FAQ(token: widget.token);
       default:
         return const Text('Error');
     }

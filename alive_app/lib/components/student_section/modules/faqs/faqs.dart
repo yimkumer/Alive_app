@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class FAQ extends StatefulWidget {
-  const FAQ({super.key});
+  final String token;
+  const FAQ({super.key, required this.token});
 
   @override
   _FAQState createState() => _FAQState();
@@ -9,6 +10,12 @@ class FAQ extends StatefulWidget {
 
 class _FAQState extends State<FAQ> {
   int? currentPanelIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    print('Token: ${widget.token}');
+  }
 
   @override
   Widget build(BuildContext context) {

@@ -1,7 +1,19 @@
 import 'package:flutter/material.dart';
 
-class Ai extends StatelessWidget {
-  const Ai({super.key});
+class Ai extends StatefulWidget {
+  final String token;
+  const Ai({super.key, required this.token});
+
+  @override
+  State<Ai> createState() => _AiState();
+}
+
+class _AiState extends State<Ai> {
+  @override
+  void initState() {
+    super.initState();
+    print('Token: ${widget.token}');
+  }
 
   @override
   Widget build(BuildContext context) {
