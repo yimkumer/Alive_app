@@ -253,7 +253,7 @@ class _SubjectsState extends State<Subjects> {
                   ],
                 ),
 
-                //Displaying the Study materials
+                //Displaying the Subjects
                 Expanded(
                   child: FutureBuilder<List<Subject>>(
                     future: dataFuture,

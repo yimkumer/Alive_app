@@ -4,6 +4,32 @@ import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
 
+class StudyMaterialData {
+  final String studyMaterialName;
+  final String studyMaterialCreatedBy;
+  final String subjectCode;
+  final String institute;
+  final List<String> studyMaterialTags;
+
+  StudyMaterialData({
+    required this.studyMaterialName,
+    required this.studyMaterialCreatedBy,
+    required this.subjectCode,
+    required this.institute,
+    required this.studyMaterialTags,
+  });
+
+  factory StudyMaterialData.fromJson(Map<String, dynamic> json) {
+    return StudyMaterialData(
+      studyMaterialName: json['study_material_name'],
+      studyMaterialCreatedBy: json['study_material_created_by'],
+      subjectCode: json['subject_code'],
+      institute: json['institute'],
+      studyMaterialTags: List<String>.from(json['study_material_tags']),
+    );
+  }
+}
+
 class StudyMaterial extends StatefulWidget {
   final String token;
 
@@ -14,36 +40,50 @@ class StudyMaterial extends StatefulWidget {
 }
 
 class _StudyMaterialState extends State<StudyMaterial> {
+  final Map<String, String> instituteIds = {
+    'Acharya Institute Of Technology': 'AIT',
+    'Acharya Institute of Graduate Studies': 'AGS',
+    'Acharya Polytechnic': 'APT',
+    'Acharya & Bm Reddy College Of Pharmacy': 'ACP',
+    'Acharyas Nrv School Of Architecture': 'ASA',
+    'Smt.Nagarathnamma College Of Nursing': 'ANR',
+    'Acharya School Of Design': 'ASD',
+    'Acharya Institute Of Allied Health Sciences': 'AHS',
+    'Smt. Nagarathnamma School Of Nursing': 'ASN',
+    'Acharyas Nr institute Of Physiotherapy': 'APS',
+  };
+
   String? dropdownValue;
   String? searchText;
   Future? dataFuture;
+  String? instituteId;
 
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchData();
-
-    print('Token: ${widget.token}');
+    dataFuture = fetchData(instituteId);
   }
 
-  Future fetchData() async {
-    final response = await http.get(
-      Uri.parse(
-          'https://api.postman.com/collections/21203659-7ced7ea2-1791-4f50-ae6b-4f7979a1fe7d'),
-      headers: {
-        'X-Api': 'PMAT-01HZ9Z4DDVFXTBBZQT37TH30CC',
-      },
-    );
+  Future<List<StudyMaterialData>> fetchData(String? instituteId) async {
+    var headers = {'Authorization': 'Bearer ${widget.token}'};
+    var queryParameters = {
+      if (instituteId != null) 'institute': instituteId,
+    };
 
+    var uri = Uri.https(
+      'studymaterial-api.alive.university',
+      '/api/study-material',
+      queryParameters,
+    );
+    print('URI: $uri');
+    var response = await http.get(uri, headers: headers);
     if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(response.body);
-      if (jsonResponse['success']) {
-        return jsonResponse['data'];
-      } else {
-        throw Exception(jsonResponse['message']);
-      }
+      Map<String, dynamic> jsonResponse = json.decode(response.body);
+      List materials = jsonResponse['materials'] ?? [];
+      print('Materials: $materials'); // print statement to check materials
+      return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
     } else {
-      throw Exception('Failed to load data');
+      throw Exception('Failed to load study materials');
     }
   }
 
@@ -112,31 +152,27 @@ class _StudyMaterialState extends State<StudyMaterial> {
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 style: const TextStyle(color: Colors.black),
-                                items: <String>[
-                                  'Acharya Institute Of Technology',
-                                  'Acharya Institute of Graduate Studies',
-                                  'Acharya Polytechnic',
-                                  'Acharya & Bm Reddy College Of Pharmacy',
-                                  'Acharyas Nrv School Of Architecture',
-                                  'Smt.Nagarathnamma College Of Nursing',
-                                  'Acharya School Of Design',
-                                  'Acharya Institute Of Allied Health Sciences',
-                                  'Smt. Nagarathnamma School Of Nursing',
-                                  'Acharyas Nr institute Of Physiotherapy',
-                                ].map<DropdownMenuItem<String>>((String value) {
+                                items: instituteIds.keys
+                                    .map<DropdownMenuItem<String>>(
+                                        (String key) {
                                   return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Text(value),
+                                    value: key,
+                                    child: Text(key),
                                   );
                                 }).toList(),
                                 onChanged: (String? newValue) {
                                   setState(() {
-                                    dropdownValue = newValue;
+                                    instituteId = newValue;
+                                    dataFuture =
+                                        fetchData(instituteIds[newValue]);
                                   });
                                 },
-                                hint: const Text(
-                                  'Select Institute',
-                                  style: TextStyle(
+                                hint: Text(
+                                  instituteId != null
+                                      ? instituteIds[instituteId] ??
+                                          'Select Institute'
+                                      : 'Select Institute',
+                                  style: const TextStyle(
                                       color: Colors.white, fontSize: 16),
                                 ),
                                 dropdownColor: Colors.white,
@@ -207,7 +243,48 @@ class _StudyMaterialState extends State<StudyMaterial> {
                       } else if (snapshot.hasError) {
                         return Text('Error: ${snapshot.error}');
                       } else {
-                        return Text('Data: ${snapshot.data}');
+                        return SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: DataTable(
+                            columns: const <DataColumn>[
+                              DataColumn(
+                                label: Text(
+                                  'Material Name',
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Created By',
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Subject-Code',
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'Action',
+                                ),
+                              ),
+                            ],
+                            rows: List<DataRow>.generate(
+                              snapshot.data!.length,
+                              (index) => DataRow(
+                                cells: <DataCell>[
+                                  DataCell(Text(snapshot
+                                      .data![index].study_material_name)),
+                                  DataCell(Text(snapshot
+                                      .data![index].study_material_created_by)),
+                                  DataCell(
+                                      Text(snapshot.data![index].subject_code)),
+                                  const DataCell(Icon(
+                                      Icons.download_rounded)), // Download icon
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
                       }
                     },
                   ),
