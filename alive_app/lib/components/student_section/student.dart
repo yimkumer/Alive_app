@@ -61,10 +61,12 @@ class _StudentState extends State<Student> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login Success')),
+        const SnackBar(
+          content: Text('Login Success'),
+          duration: Durations.medium2,
+        ),
       );
     });
   }

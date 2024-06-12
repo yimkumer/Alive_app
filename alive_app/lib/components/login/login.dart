@@ -94,6 +94,7 @@ class _LoginState extends State<Login> {
                 String token = jsonResponse['token'];
 
                 if (jsonResponse['status'] == true) {
+                  FocusScope.of(localContext).requestFocus(FocusNode());
                   Navigator.push(
                     localContext,
                     MaterialPageRoute(

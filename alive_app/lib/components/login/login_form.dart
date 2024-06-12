@@ -45,6 +45,7 @@ class LoginForm extends StatelessWidget {
                   height: 30,
                 ),
                 TextFormField(
+                  autofocus: false,
                   controller: usernameController,
                   decoration: const InputDecoration(
                     labelText: 'User name*',
@@ -60,6 +61,7 @@ class LoginForm extends StatelessWidget {
                   height: 30,
                 ),
                 TextFormField(
+                  autofocus: false,
                   controller: passwordController,
                   obscureText: obscureText,
                   decoration: InputDecoration(
