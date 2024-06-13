@@ -64,7 +64,20 @@ class _StudyMaterialState extends State<StudyMaterial> {
   @override
   void initState() {
     super.initState();
-    dataFuture = fetchData(instituteId);
+  }
+
+  void onQueryParameterSelected(String selectedInstituteId) {
+    setState(() {
+      instituteId = selectedInstituteId;
+      dataFuture = fetchData(instituteId);
+    });
+  }
+
+  void onDropdownValueChanged(String newValue) {
+    setState(() {
+      dropdownValue = newValue;
+      dataFuture = fetchData(dropdownValue);
+    });
   }
 
   Future<List<StudyMaterialData>> fetchData(String? instituteId) async {
@@ -219,7 +232,27 @@ class _StudyMaterialState extends State<StudyMaterial> {
                   child: FutureBuilder(
                     future: dataFuture,
                     builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
+                      if (dataFuture == null) {
+                        return Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 30.0),
+                            SvgPicture.asset(
+                              'assets/smaterials.svg',
+                              height: 200,
+                            ),
+                            const Text(
+                              'Please select a institute to browse study materials or search',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Color(0xFF656565),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        );
+                      } else if (snapshot.connectionState ==
+                          ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
                         print('Error: ${snapshot.error}');
