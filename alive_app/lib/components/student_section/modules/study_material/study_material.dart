@@ -25,7 +25,9 @@ class StudyMaterialData {
       studyMaterialCreatedBy: json['study_material_created_by'],
       subjectCode: json['subject_code'],
       institute: json['institute'],
-      studyMaterialTags: List<String>.from(json['study_material_tags']),
+      studyMaterialTags: json['study_material_tags'] is List
+          ? List<String>.from(json['study_material_tags'])
+          : [],
     );
   }
 }
@@ -55,8 +57,9 @@ class _StudyMaterialState extends State<StudyMaterial> {
 
   String? dropdownValue;
   String? searchText;
-  Future? dataFuture;
+  Future<List<StudyMaterialData>>? dataFuture;
   String? instituteId;
+  String? fetchedInstituteId;
 
   @override
   void initState() {
@@ -69,7 +72,6 @@ class _StudyMaterialState extends State<StudyMaterial> {
     var queryParameters = {
       if (instituteId != null) 'institute': instituteId,
     };
-
     var uri = Uri.https(
       'studymaterial-api.alive.university',
       '/api/study-material',
@@ -79,8 +81,8 @@ class _StudyMaterialState extends State<StudyMaterial> {
     var response = await http.get(uri, headers: headers);
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);
-      List materials = jsonResponse['materials'] ?? [];
-      print('Materials: $materials'); // print statement to check materials
+      List materials = jsonResponse['data']['materials'] ?? [];
+      fetchedInstituteId = instituteId;
       return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
     } else {
       throw Exception('Failed to load study materials');
@@ -217,32 +219,12 @@ class _StudyMaterialState extends State<StudyMaterial> {
                   child: FutureBuilder(
                     future: dataFuture,
                     builder: (context, snapshot) {
-                      if (dropdownValue == null &&
-                          (searchText == null || searchText!.isEmpty)) {
-                        return Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const SizedBox(height: 30.0),
-                            SvgPicture.asset(
-                              'assets/smaterials.svg',
-                              height: 200,
-                            ),
-                            const Text(
-                              'Please select a institute to browse study materials or search',
-                              textAlign: TextAlign.center,
-                              style: TextStyle(
-                                color: Color(0xFF656565),
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        );
-                      } else if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
                         return const CircularProgressIndicator();
                       } else if (snapshot.hasError) {
+                        print('Error: ${snapshot.error}');
                         return Text('Error: ${snapshot.error}');
-                      } else {
+                      } else if (snapshot.hasData) {
                         return SingleChildScrollView(
                           scrollDirection: Axis.horizontal,
                           child: DataTable(
@@ -269,22 +251,27 @@ class _StudyMaterialState extends State<StudyMaterial> {
                               ),
                             ],
                             rows: List<DataRow>.generate(
-                              snapshot.data!.length,
-                              (index) => DataRow(
-                                cells: <DataCell>[
-                                  DataCell(Text(snapshot
-                                      .data![index].study_material_name)),
-                                  DataCell(Text(snapshot
-                                      .data![index].study_material_created_by)),
-                                  DataCell(
-                                      Text(snapshot.data![index].subject_code)),
-                                  const DataCell(Icon(
-                                      Icons.download_rounded)), // Download icon
-                                ],
-                              ),
+                              snapshot.data?.length ?? 0,
+                              (index) {
+                                var data = snapshot.data?[index];
+                                return DataRow(
+                                  cells: <DataCell>[
+                                    DataCell(
+                                        Text(data?.studyMaterialName ?? 'N/A')),
+                                    DataCell(Text(
+                                        data?.studyMaterialCreatedBy ?? 'N/A')),
+                                    DataCell(Text(data?.subjectCode ?? 'N/A')),
+                                    const DataCell(Icon(Icons
+                                        .download_rounded)), // Download icon
+                                  ],
+                                );
+                              },
                             ),
                           ),
                         );
+                      } else {
+                        // The Future completed without data
+                        return const Text('No data');
                       }
                     },
                   ),
