@@ -32,6 +32,70 @@ class StudyMaterialData {
   }
 }
 
+class _Row {
+  _Row(
+    this.studyMaterialName,
+    this.studyMaterialCreatedBy,
+    this.subjectCode,
+  );
+
+  final String studyMaterialName;
+  final String studyMaterialCreatedBy;
+  final String subjectCode;
+}
+
+class _DataSource extends DataTableSource {
+  _DataSource(this.context, this.data) {
+    _rows = <_Row>[
+      for (var item in data)
+        _Row(
+          item.studyMaterialName ?? 'N/A',
+          item.studyMaterialCreatedBy ?? 'N/A',
+          item.subjectCode ?? 'N/A',
+        ),
+    ];
+  }
+
+  final BuildContext context;
+  final List<dynamic> data;
+  List<_Row> _rows = [];
+
+  @override
+  DataRow getRow(int index) {
+    assert(index >= 0);
+    if (index >= _rows.length) {
+      return const DataRow(cells: []);
+    }
+    final _Row row = _rows[index];
+    return DataRow.byIndex(
+      index: index,
+      cells: <DataCell>[
+        DataCell(
+          Row(
+            children: <Widget>[
+              SvgPicture.asset('assets/book_icon.svg', height: 25, width: 25),
+              const SizedBox(width: 8),
+              Text(row.studyMaterialName),
+            ],
+          ),
+        ),
+        DataCell(Text(row.studyMaterialCreatedBy)),
+        DataCell(Text(row.subjectCode)),
+        const DataCell(Icon(Icons.download_rounded)),
+      ],
+    );
+  }
+
+  @override
+  bool get isRowCountApproximate => false;
+
+  @override
+  int get rowCount => _rows.length;
+
+  @override
+  int get selectedRowCount => 0;
+}
+
 class StudyMaterial extends StatefulWidget {
   final String token;
 
@@ -60,6 +124,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
   Future<List<StudyMaterialData>>? dataFuture;
   String? instituteId;
   String? fetchedInstituteId;
+  int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
 
   @override
   void initState() {
@@ -228,21 +293,49 @@ class _StudyMaterialState extends State<StudyMaterial> {
 
               //Displaying the Study materials
               Expanded(
-                child: SingleChildScrollView(
-                  child: FutureBuilder(
-                    future: dataFuture,
-                    builder: (context, snapshot) {
-                      if (dataFuture == null) {
+                child: FutureBuilder(
+                  future: dataFuture,
+                  builder: (context, snapshot) {
+                    if (dataFuture == null) {
+                      return Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 30.0),
+                          SvgPicture.asset(
+                            'assets/smaterials.svg',
+                            height: 200,
+                          ),
+                          const SizedBox(height: 10.0),
+                          const Text(
+                            'Please select an institute to browse study materials or search',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFF656565),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      );
+                    } else if (snapshot.connectionState ==
+                        ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      print('Error: ${snapshot.error}');
+                      return Text('Error: ${snapshot.error}');
+                    } else if (snapshot.hasData) {
+                      List<StudyMaterialData> data =
+                          snapshot.data as List<StudyMaterialData>;
+                      if (data.isEmpty) {
                         return Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const SizedBox(height: 30.0),
                             SvgPicture.asset(
-                              'assets/smaterials.svg',
+                              'assets/no_material.svg',
                               height: 200,
                             ),
+                            const SizedBox(height: 10.0),
                             const Text(
-                              'Please select a institute to browse study materials or search',
+                              "Selected institute doesn't seem to have any study materials",
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Color(0xFF656565),
@@ -251,63 +344,58 @@ class _StudyMaterialState extends State<StudyMaterial> {
                             ),
                           ],
                         );
-                      } else if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const CircularProgressIndicator();
-                      } else if (snapshot.hasError) {
-                        print('Error: ${snapshot.error}');
-                        return Text('Error: ${snapshot.error}');
-                      } else if (snapshot.hasData) {
+                      } else {
                         return SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: DataTable(
+                          child: PaginatedDataTable(
+                            rowsPerPage: _rowsPerPage,
+                            availableRowsPerPage: const <int>[10, 25, 50],
+                            onRowsPerPageChanged: (int? value) {
+                              setState(() {
+                                _rowsPerPage = value ?? _rowsPerPage;
+                              });
+                            },
                             columns: const <DataColumn>[
                               DataColumn(
                                 label: Text(
-                                  'Material Name',
+                                  'MATERIAL NAME',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                               DataColumn(
                                 label: Text(
-                                  'Created By',
+                                  'CREATED BY',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                               DataColumn(
                                 label: Text(
-                                  'Subject-Code',
+                                  'SUBJECT-CODE',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                               DataColumn(
                                 label: Text(
-                                  'Action',
+                                  'ACTION',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
                                 ),
                               ),
                             ],
-                            rows: List<DataRow>.generate(
-                              snapshot.data?.length ?? 0,
-                              (index) {
-                                var data = snapshot.data?[index];
-                                return DataRow(
-                                  cells: <DataCell>[
-                                    DataCell(
-                                        Text(data?.studyMaterialName ?? 'N/A')),
-                                    DataCell(Text(
-                                        data?.studyMaterialCreatedBy ?? 'N/A')),
-                                    DataCell(Text(data?.subjectCode ?? 'N/A')),
-                                    const DataCell(Icon(Icons
-                                        .download_rounded)), // Download icon
-                                  ],
-                                );
-                              },
-                            ),
+                            source: _DataSource(context, snapshot.data ?? []),
                           ),
                         );
-                      } else {
-                        // The Future completed without data
-                        return const Text('No data');
                       }
-                    },
-                  ),
+                    } else {
+                      return const Text('No data');
+                    }
+                  },
                 ),
               ),
             ],

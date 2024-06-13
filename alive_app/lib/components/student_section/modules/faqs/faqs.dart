@@ -14,7 +14,6 @@ class _FAQState extends State<FAQ> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override
