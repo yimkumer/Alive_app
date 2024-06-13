@@ -107,7 +107,7 @@ class _SubjectsState extends State<Subjects> {
       },
       child: Scaffold(
         body: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(5.0),
           child: Card(
             color: const Color(0xFFFDF9F0),
             elevation: 8,
@@ -264,7 +264,6 @@ class _SubjectsState extends State<Subjects> {
                         return Text(
                             'Error: ${snapshot.error}\nStack trace: ${snapshot.stackTrace}');
                       } else {
-                        print('Dropdown value: $dropdownValue');
                         var subjects = snapshot.data!
                             .where((subject) =>
                                 subject.currentSem ==
