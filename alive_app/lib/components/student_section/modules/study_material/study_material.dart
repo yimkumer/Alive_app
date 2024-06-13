@@ -7,11 +7,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 
+typedef DownloadLinkGetter = Future<String> Function(int materialId);
+
 class StudyMaterialData {
   final String studyMaterialName;
   final String studyMaterialCreatedBy;
   final String subjectCode;
   final String institute;
+  final int material_id;
   final List<String> studyMaterialTags;
 
   StudyMaterialData({
@@ -19,6 +22,7 @@ class StudyMaterialData {
     required this.studyMaterialCreatedBy,
     required this.subjectCode,
     required this.institute,
+    required this.material_id,
     required this.studyMaterialTags,
   });
 
@@ -28,6 +32,7 @@ class StudyMaterialData {
       studyMaterialCreatedBy: json['study_material_created_by'],
       subjectCode: json['subject_code'],
       institute: json['institute'],
+      material_id: json['study_material_id'],
       studyMaterialTags: json['study_material_tags'] is List
           ? List<String>.from(json['study_material_tags'])
           : [],
@@ -40,27 +45,31 @@ class _Row {
     this.studyMaterialName,
     this.studyMaterialCreatedBy,
     this.subjectCode,
+    this.material_id,
   );
 
   final String studyMaterialName;
   final String studyMaterialCreatedBy;
   final String subjectCode;
+  final int material_id;
 }
 
 class _DataSource extends DataTableSource {
-  _DataSource(this.context, this.data) {
+  _DataSource(this.context, this.data, this.getDownloadLink) {
     _rows = <_Row>[
       for (var item in data)
         _Row(
           item.studyMaterialName ?? 'N/A',
           item.studyMaterialCreatedBy ?? 'N/A',
           item.subjectCode ?? 'N/A',
+          item.material_id ?? 0,
         ),
     ];
   }
 
   final BuildContext context;
   final List<dynamic> data;
+  final DownloadLinkGetter getDownloadLink;
   List<_Row> _rows = [];
 
   @override
@@ -87,8 +96,8 @@ class _DataSource extends DataTableSource {
         DataCell(
           const Icon(Icons.download_rounded),
           onTap: () async {
-            const url =
-                'https://content-ai.sgp1.digitaloceanspaces.com/study_materials/EMG-2nd-yr-bpt.-17140413801450.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Contenta256=UNSIGNED-PAYLOADX-Amz-Credential=FDDWKZU3GR54F3DS6IXF%2F20240613%2Fsgp1%2Fs3%2Faws4_request&X-Amz-Date=20240613T132052Z&X-Amz-Expires=300&X-Amz-Signature=fb1ad0073dbd17aafd09faf947780d00563cce43b11010f3a848e4a3152b78c2&X-Amz-SignedHeaders=host&x-id=GetObject';
+            final materialId = row.material_id;
+            String url = await getDownloadLink(materialId);
             final response = await http.get(Uri.parse(url));
             final directoryPath = await FilePicker.platform.getDirectoryPath();
             if (directoryPath == null) {
@@ -186,6 +195,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
     });
   }
 
+  //FOR getting the study materials
   Future<List<StudyMaterialData>> fetchData(String? instituteId) async {
     var headers = {'Authorization': 'Bearer ${widget.token}'};
     var queryParameters = {
@@ -196,7 +206,6 @@ class _StudyMaterialState extends State<StudyMaterial> {
       '/api/study-material',
       queryParameters,
     );
-    print('URI: $uri');
     var response = await http.get(uri, headers: headers);
     if (response.statusCode == 200) {
       Map<String, dynamic> jsonResponse = json.decode(response.body);
@@ -206,6 +215,27 @@ class _StudyMaterialState extends State<StudyMaterial> {
     } else {
       throw Exception('Failed to load study materials');
     }
+  }
+
+  //FOR getting the download link according to the study_material_id
+  Future<String> getDownloadLink(int materialId) async {
+    var headers = {'Authorization': 'Bearer ${widget.token}'};
+    var request = http.Request(
+        'GET',
+        Uri.parse(
+            'https://studymaterial-api.alive.university/api/study-material/$materialId/download'));
+
+    request.headers.addAll(headers);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var responseJson = jsonDecode(responseBody);
+      if (responseJson['success'] == true) {
+        var link = responseJson['data'][0];
+        return link;
+      }
+    }
+    return '';
   }
 
   @override
@@ -467,7 +497,8 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                   ),
                                 ),
                               ],
-                              source: _DataSource(context, snapshot.data ?? []),
+                              source: _DataSource(context, snapshot.data ?? [],
+                                  getDownloadLink),
                             ),
                           );
                         }
