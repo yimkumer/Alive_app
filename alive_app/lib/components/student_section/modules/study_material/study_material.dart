@@ -1,8 +1,11 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:file_picker/file_picker.dart';
 
 class StudyMaterialData {
   final String studyMaterialName;
@@ -81,7 +84,28 @@ class _DataSource extends DataTableSource {
         ),
         DataCell(Text(row.studyMaterialCreatedBy)),
         DataCell(Text(row.subjectCode)),
-        const DataCell(Icon(Icons.download_rounded)),
+        DataCell(
+          const Icon(Icons.download_rounded),
+          onTap: () async {
+            const url =
+                'https://content-ai.sgp1.digitaloceanspaces.com/study_materials/EMG-2nd-yr-bpt.-17140413801450.pdf?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Contenta256=UNSIGNED-PAYLOADX-Amz-Credential=FDDWKZU3GR54F3DS6IXF%2F20240613%2Fsgp1%2Fs3%2Faws4_request&X-Amz-Date=20240613T132052Z&X-Amz-Expires=300&X-Amz-Signature=fb1ad0073dbd17aafd09faf947780d00563cce43b11010f3a848e4a3152b78c2&X-Amz-SignedHeaders=host&x-id=GetObject';
+            final response = await http.get(Uri.parse(url));
+            final directoryPath = await FilePicker.platform.getDirectoryPath();
+            if (directoryPath == null) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('No directory selected')),
+              );
+              return;
+            }
+            final file = File('$directoryPath/file.pdf');
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                  content:
+                      Text('Download completed! File saved at ${file.path}')),
+            );
+            await file.writeAsBytes(response.bodyBytes);
+          },
+        ),
       ],
     );
   }
@@ -134,25 +158,38 @@ class _StudyMaterialState extends State<StudyMaterial> {
   void onQueryParameterSelected(String selectedInstituteId) {
     setState(() {
       instituteId = selectedInstituteId;
-      dataFuture = fetchData(instituteId, searchText);
+      dataFuture = fetchData(instituteId);
     });
   }
 
   void onDropdownValueChanged(String newValue) {
     setState(() {
       dropdownValue = newValue;
-      dataFuture = fetchData(dropdownValue, searchText);
+      dataFuture = fetchData(dropdownValue);
     });
   }
 
-  Future<List<StudyMaterialData>> fetchData(
-      String? instituteId, String? searchText) async {
+  void search(String query) {
+    print('Performing search with query: $query');
+    setState(() {
+      searchText = query;
+      if (query.isEmpty) {
+        dataFuture = fetchData(dropdownValue);
+      } else {
+        dataFuture = fetchData(dropdownValue).then((data) {
+          return data
+              .where((item) =>
+                  item.subjectCode.toLowerCase().contains(query.toLowerCase()))
+              .toList();
+        });
+      }
+    });
+  }
+
+  Future<List<StudyMaterialData>> fetchData(String? instituteId) async {
     var headers = {'Authorization': 'Bearer ${widget.token}'};
     var queryParameters = {
       if (instituteId != null) 'institute': instituteId,
-      if (searchText != null)
-        'search':
-            searchText.toUpperCase(), // changed 'subject_code' to 'search'
     };
     var uri = Uri.https(
       'studymaterial-api.alive.university',
@@ -253,8 +290,8 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                   onChanged: (String? newValue) {
                                     setState(() {
                                       instituteId = newValue;
-                                      dataFuture = fetchData(
-                                          instituteIds[newValue], searchText);
+                                      dataFuture =
+                                          fetchData(instituteIds[newValue]);
                                     });
                                   },
                                   hint: Text(
@@ -284,11 +321,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
                               ),
                               child: TextField(
                                 onChanged: (String value) {
-                                  setState(() {
-                                    searchText = value;
-                                    dataFuture =
-                                        fetchData(instituteId, searchText);
-                                  });
+                                  search(value);
                                 },
                                 decoration: const InputDecoration(
                                   hintText: 'Search by subjects...',
@@ -306,9 +339,10 @@ class _StudyMaterialState extends State<StudyMaterial> {
 
                 //Displaying the Study materials
                 Expanded(
-                  child: FutureBuilder(
+                  child: FutureBuilder<List<StudyMaterialData>>(
                     future: dataFuture,
-                    builder: (context, snapshot) {
+                    builder: (BuildContext context,
+                        AsyncSnapshot<List<StudyMaterialData>> snapshot) {
                       if (dataFuture == null) {
                         return SingleChildScrollView(
                           child: Column(
