@@ -6,6 +6,9 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:archive/archive.dart';
+import 'package:flutter/foundation.dart';
+import 'package:path/path.dart' as p;
 
 typedef DownloadLinkGetter = Future<String> Function(int materialId);
 
@@ -98,21 +101,16 @@ class _DataSource extends DataTableSource {
           onTap: () async {
             final materialId = row.material_id;
             String url = await getDownloadLink(materialId);
-            final response = await http.get(Uri.parse(url));
+            List<String> urls = [url];
             final directoryPath = await FilePicker.platform.getDirectoryPath();
             if (directoryPath == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('No directory selected')),
-              );
               return;
             }
-            final file = File('$directoryPath/file.pdf');
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                  content:
-                      Text('Download completed! File saved at ${file.path}')),
+              const SnackBar(
+                content: Text('Download completed!'),
+              ),
             );
-            await file.writeAsBytes(response.bodyBytes);
           },
         ),
       ],
@@ -127,6 +125,31 @@ class _DataSource extends DataTableSource {
 
   @override
   int get selectedRowCount => 0;
+}
+
+// This function is run in a background thread and can perform heavy operations.
+Future<List<File>> downloadFiles(Map<String, dynamic> args) async {
+  List<String> urls = args['urls'];
+  String directoryPath = args['directoryPath'];
+  List<File> files = [];
+
+  for (var url in urls) {
+    print("GET request to: $url");
+    final response = await http.get(Uri.parse(url));
+    var fileBytes = response.bodyBytes;
+    String fileName = p.basename(Uri.parse(url).path);
+    final filePath = '$directoryPath/$fileName';
+    final file = File(filePath);
+
+    try {
+      await file.writeAsBytes(fileBytes);
+      files.add(file);
+    } catch (e) {
+      print('Could not save the file $filePath. Error: $e');
+    }
+  }
+
+  return files;
 }
 
 class StudyMaterial extends StatefulWidget {
@@ -224,15 +247,14 @@ class _StudyMaterialState extends State<StudyMaterial> {
         'GET',
         Uri.parse(
             'https://studymaterial-api.alive.university/api/study-material/$materialId/download'));
-
     request.headers.addAll(headers);
     http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       var responseBody = await response.stream.bytesToString();
       var responseJson = jsonDecode(responseBody);
       if (responseJson['success'] == true) {
-        var link = responseJson['data'][0];
-        return link;
+        var links = responseJson['data'].cast<String>();
+        return links.join(', ');
       }
     }
     return '';

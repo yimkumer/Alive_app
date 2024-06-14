@@ -10,19 +10,23 @@ class AuthService {
   Future<Map<String, dynamic>> login(
       String username, String password, String userType) async {
     var headers = {'Content-Type': 'application/json'};
-    var request = http.Request(
-        'POST', Uri.parse('https://api.alive.university/api/v1/login/erp'));
-    request.body = json.encode(
+    var body = json.encode(
         {"username": username, "password": password, "usertype": userType});
-    request.headers.addAll(headers);
 
-    http.StreamedResponse response = await request.send();
+    try {
+      var response = await http.post(
+        Uri.parse('https://api.alive.university/api/v1/login/erp'),
+        headers: headers,
+        body: body,
+      );
 
-    if (response.statusCode == 200) {
-      var jsonResponse = jsonDecode(await response.stream.bytesToString());
-      return jsonResponse;
-    } else {
-      throw Exception('Failed to connect to the server');
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      } else {
+        throw Exception('Failed to connect to the server');
+      }
+    } catch (e) {
+      throw Exception('An error occurred: $e');
     }
   }
 }
