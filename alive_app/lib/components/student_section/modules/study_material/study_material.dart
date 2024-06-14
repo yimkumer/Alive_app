@@ -101,10 +101,15 @@ class _DataSource extends DataTableSource {
           onTap: () async {
             final materialId = row.material_id;
             String url = await getDownloadLink(materialId);
-            List<String> urls = [url];
+            List<String> urls = url.split(', ');
             final directoryPath = await FilePicker.platform.getDirectoryPath();
             if (directoryPath == null) {
               return;
+            }
+            if (urls.length == 1) {
+              await downloadSingleFile(urls[0], directoryPath);
+            } else {
+              await downloadMultipleFiles(urls, directoryPath);
             }
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -128,27 +133,32 @@ class _DataSource extends DataTableSource {
 }
 
 // This function is run in a background thread and can perform heavy operations.
-Future<List<File>> downloadFiles(Map<String, dynamic> args) async {
-  List<String> urls = args['urls'];
-  String directoryPath = args['directoryPath'];
+Future<File> downloadSingleFile(String url, String directoryPath) async {
+  final response = await http.get(Uri.parse(url));
+  var fileBytes = response.bodyBytes;
+  String fileName = p.basename(Uri.parse(url).path);
+  final filePath = '$directoryPath/$fileName';
+  final file = File(filePath);
+  try {
+    await file.writeAsBytes(fileBytes);
+    return file;
+  } catch (e) {
+    print('Could not save the file $filePath. Error: $e');
+    rethrow;
+  }
+}
+
+Future<List<File>> downloadMultipleFiles(
+    List<String> urls, String directoryPath) async {
   List<File> files = [];
-
   for (var url in urls) {
-    print("GET request to: $url");
-    final response = await http.get(Uri.parse(url));
-    var fileBytes = response.bodyBytes;
-    String fileName = p.basename(Uri.parse(url).path);
-    final filePath = '$directoryPath/$fileName';
-    final file = File(filePath);
-
     try {
-      await file.writeAsBytes(fileBytes);
+      var file = await downloadSingleFile(url, directoryPath);
       files.add(file);
     } catch (e) {
-      print('Could not save the file $filePath. Error: $e');
+      print('Could not download the file from $url. Error: $e');
     }
   }
-
   return files;
 }
 
