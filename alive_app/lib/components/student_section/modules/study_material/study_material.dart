@@ -107,9 +107,13 @@ class _DataSource extends DataTableSource {
               return;
             }
             if (urls.length == 1) {
-              await downloadSingleFile(urls[0], directoryPath);
+              await downloadSingleFile(
+                urls[0],
+                directoryPath,
+              );
             } else {
-              await downloadMultipleFiles(urls, directoryPath);
+              await downloadMultipleFiles(
+                  urls, directoryPath, row.studyMaterialName);
             }
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
@@ -132,7 +136,7 @@ class _DataSource extends DataTableSource {
   int get selectedRowCount => 0;
 }
 
-// This function is run in a background thread and can perform heavy operations.
+// This function is to download Single url file
 Future<File> downloadSingleFile(String url, String directoryPath) async {
   final response = await http.get(Uri.parse(url));
   var fileBytes = response.bodyBytes;
@@ -148,8 +152,9 @@ Future<File> downloadSingleFile(String url, String directoryPath) async {
   }
 }
 
-Future<List<File>> downloadMultipleFiles(
-    List<String> urls, String directoryPath) async {
+// This function is to download Multiple url files
+Future<void> downloadMultipleFiles(
+    List<String> urls, String directoryPath, String studyMaterialName) async {
   List<File> files = [];
   for (var url in urls) {
     try {
@@ -159,7 +164,20 @@ Future<List<File>> downloadMultipleFiles(
       print('Could not download the file from $url. Error: $e');
     }
   }
-  return files;
+
+  final archive = Archive();
+
+  for (var file in files) {
+    final bytes = file.readAsBytesSync();
+    final fileName = p.basename(file.path);
+    archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+
+    file.deleteSync();
+  }
+
+  final zipEncoder = ZipEncoder();
+  final zipFile = File('$directoryPath/$studyMaterialName.zip');
+  zipFile.writeAsBytesSync(zipEncoder.encode(archive)!);
 }
 
 class StudyMaterial extends StatefulWidget {
