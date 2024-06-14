@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:alive_app/components/faculty_section/faculty.dart';
 import 'package:alive_app/components/login/loading_screen.dart';
 import 'package:alive_app/components/student_section/student.dart';
@@ -116,23 +118,22 @@ class _LoginState extends State<Login> {
                         MaterialPageRoute(
                             builder: (context) => Student(token: token)),
                       );
-                    } else {
-                      Navigator.pushReplacement(
-                        localContext,
-                        MaterialPageRoute(
-                            builder: (context) => Faculty(token: token)),
-                      );
                     }
                   });
-                } else if (jsonResponse['status'] == false) {
+                } else if (jsonResponse['status'] != true) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Wrong username or password')),
                   );
                 }
               } catch (e) {
+                String errorMessage;
+                if (e is SocketException) {
+                  errorMessage = 'No Internet connection';
+                } else {
+                  errorMessage = 'Failed to connect to the server';
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                      content: Text('Failed to connect to the server')),
+                  SnackBar(content: Text(errorMessage)),
                 );
               }
             }

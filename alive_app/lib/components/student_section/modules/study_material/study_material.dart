@@ -16,6 +16,7 @@ class StudyMaterialData {
   final String studyMaterialName;
   final String studyMaterialCreatedBy;
   final String subjectCode;
+  final String subjectname;
   final String institute;
   final int material_id;
   final List<String> studyMaterialTags;
@@ -24,6 +25,7 @@ class StudyMaterialData {
     required this.studyMaterialName,
     required this.studyMaterialCreatedBy,
     required this.subjectCode,
+    required this.subjectname,
     required this.institute,
     required this.material_id,
     required this.studyMaterialTags,
@@ -34,6 +36,7 @@ class StudyMaterialData {
       studyMaterialName: json['study_material_name'],
       studyMaterialCreatedBy: json['study_material_created_by'],
       subjectCode: json['subject_code'],
+      subjectname: json['subject_name'],
       institute: json['institute'],
       material_id: json['study_material_id'],
       studyMaterialTags: json['study_material_tags'] is List
@@ -48,12 +51,14 @@ class _Row {
     this.studyMaterialName,
     this.studyMaterialCreatedBy,
     this.subjectCode,
+    this.subjectname,
     this.material_id,
   );
 
   final String studyMaterialName;
   final String studyMaterialCreatedBy;
   final String subjectCode;
+  final String subjectname;
   final int material_id;
 }
 
@@ -65,6 +70,7 @@ class _DataSource extends DataTableSource {
           item.studyMaterialName ?? 'N/A',
           item.studyMaterialCreatedBy ?? 'N/A',
           item.subjectCode ?? 'N/A',
+          item.subjectname ?? 'N/A',
           item.material_id ?? 0,
         ),
     ];
@@ -95,7 +101,7 @@ class _DataSource extends DataTableSource {
           ),
         ),
         DataCell(Text(row.studyMaterialCreatedBy)),
-        DataCell(Text(row.subjectCode)),
+        DataCell(Text('${row.subjectname} - ${row.material_id}')),
         DataCell(
           const Icon(Icons.download_rounded),
           onTap: () async {
@@ -210,6 +216,8 @@ class _StudyMaterialState extends State<StudyMaterial> {
   String? fetchedInstituteId;
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
 
+  final searchTextController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
@@ -229,6 +237,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
     });
   }
 
+  //Search function
   void search(String query) {
     print('Performing search with query: $query');
     setState(() {
@@ -236,14 +245,66 @@ class _StudyMaterialState extends State<StudyMaterial> {
       if (query.isEmpty) {
         dataFuture = fetchData(dropdownValue);
       } else {
-        dataFuture = fetchData(dropdownValue).then((data) {
-          return data
-              .where((item) =>
-                  item.subjectCode.toLowerCase().contains(query.toLowerCase()))
-              .toList();
+        // Make two API calls: one by material_id and another by subject_code
+        Future<List<StudyMaterialData>> futureMaterialsById =
+            fetchMaterialsById(query);
+        Future<List<StudyMaterialData>> futureMaterialsBySubject =
+            fetchMaterialsBySubject(query);
+
+        // Combine the results from both API calls
+        dataFuture =
+            Future.wait([futureMaterialsById, futureMaterialsBySubject])
+                .then((results) {
+          var allResults = <StudyMaterialData>[];
+          allResults.addAll(results[0]);
+          allResults.addAll(results[1]);
+          return allResults;
         });
       }
     });
+  }
+
+  //FOR getting the study materials by id
+  Future<List<StudyMaterialData>> fetchMaterialsById(String materialId) async {
+    var headers = {'Authorization': 'Bearer ${widget.token}'};
+    var request = http.Request(
+        'GET',
+        Uri.parse(
+            'https://studymaterial-api.alive.university/api/study-material/$materialId'));
+    request.headers.addAll(headers);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var jsonResponse = json.decode(responseBody);
+      List materials = jsonResponse['data']['materials'] ?? [];
+      return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
+    } else {
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${await response.stream.bytesToString()}');
+      throw Exception('Failed to load study materials by id');
+    }
+  }
+
+  //FOR getting the study materials by subject
+  Future<List<StudyMaterialData>> fetchMaterialsBySubject(
+      String subjectCode) async {
+    var headers = {'Authorization': 'Bearer ${widget.token}'};
+    var request = http.Request(
+        'GET',
+        Uri.parse(
+            'https://studymaterial-api.alive.university/api/study-material/subject-materials?subject=$subjectCode'));
+    request.headers.addAll(headers);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var jsonResponse = json.decode(responseBody);
+      List materials = jsonResponse['data']['materials'] ?? [];
+      return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
+    } else {
+      print('Response status: ${response.statusCode}');
+      print('Response body: ${await response.stream.bytesToString()}');
+      throw Exception('Failed to load study materials by id');
+    }
   }
 
   //FOR getting the study materials
@@ -358,6 +419,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
+                                  value: dropdownValue,
                                   style: const TextStyle(color: Colors.black),
                                   items: instituteIds.keys
                                       .map<DropdownMenuItem<String>>(
@@ -400,6 +462,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               child: TextField(
+                                controller: searchTextController,
                                 onChanged: (String value) {
                                   search(value);
                                 },
@@ -491,6 +554,32 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                   style: TextStyle(
                                     color: Color(0xFF656565),
                                     fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                const SizedBox(height: 20.0),
+                                ElevatedButton(
+                                  style: ButtonStyle(
+                                    backgroundColor:
+                                        WidgetStateProperty.all<Color>(
+                                            Colors.purple),
+                                    shape: WidgetStateProperty.all<
+                                        RoundedRectangleBorder>(
+                                      RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(10.0),
+                                      ),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    setState(() {
+                                      dataFuture = null;
+                                      searchTextController.clear();
+                                      instituteId = null;
+                                    });
+                                  },
+                                  child: const Text(
+                                    'Remove Filter',
+                                    style: TextStyle(color: Colors.white),
                                   ),
                                 ),
                               ],
