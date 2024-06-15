@@ -3,6 +3,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
 
 class Attachments extends StatefulWidget {
   final int materialId;
@@ -19,9 +20,34 @@ class Attachments extends StatefulWidget {
 }
 
 class _AttachmentsState extends State<Attachments> {
+  bool isGridView = true;
+  List<bool> selectedItems = [];
+
   @override
   void initState() {
     super.initState();
+  }
+
+  void toggleViewMode() {
+    setState(() {
+      isGridView = !isGridView;
+    });
+  }
+
+  void selectItem(int index) {
+    setState(() {
+      selectedItems[index] = !selectedItems[index];
+    });
+  }
+
+  void deselectAllItems() {
+    setState(() {
+      selectedItems = List<bool>.filled(selectedItems.length, false);
+    });
+  }
+
+  void downloadSelectedItems() {
+    // Add your download functionality here
   }
 
   //TO fetch the study material name and tags
@@ -72,10 +98,21 @@ class _AttachmentsState extends State<Attachments> {
       var responseJson = jsonDecode(responseBody);
       var data = responseJson['data'];
       var attachments = data
-          .map((item) => {
-                'url': item['study_material_attachment_url'],
-                'title': item['study_material_attachment_title']
-              })
+          .map((item) {
+            // Parse and format the date
+            DateTime parsedDate =
+                DateTime.parse(item['study_material_attachment_published_date'])
+                    .toLocal();
+            String formattedDate = DateFormat('dd/MM/yyyy, hh:mm a')
+                .format(parsedDate); // Change the format string
+
+            return {
+              'url': item['study_material_attachment_url'],
+              'title': item['study_material_attachment_title'],
+              'published_date':
+                  formattedDate, // Add the formatted date to the map
+            };
+          })
           .toList()
           .cast<Map<String, dynamic>>();
       return attachments;
@@ -96,7 +133,12 @@ class _AttachmentsState extends State<Attachments> {
       {'background': const Color(0xffFED7FD), 'text': const Color(0xffC54098)},
     ];
 
+    var screenSize = MediaQuery.of(context).size;
+
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("Study Materials"),
+      ),
       body: FutureBuilder<Map<String, dynamic>>(
         future: fetchStudyMaterial(),
         builder: (BuildContext context,
@@ -114,143 +156,156 @@ class _AttachmentsState extends State<Attachments> {
               padding: const EdgeInsets.all(5.0),
               child: Card(
                 elevation: 8.0,
-                child: Column(
-                  children: <Widget>[
-                    //HEADER SECTION
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
-                          const BackButton(),
-                          Expanded(
-                            child: Text(
-                              studyMaterialName ?? 'Default Name',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w600,
-                                fontSize: 18.0,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-
-                    //TAGS SECTION
-                    Wrap(
-                      alignment: WrapAlignment.start,
-                      children: studyMaterialTags.map<Widget>((tag) {
-                        var color = tagColors[
-                            studyMaterialTags.indexOf(tag) % tagColors.length];
-                        return Container(
-                          margin: const EdgeInsets.all(4.0),
-                          padding: const EdgeInsets.all(4.0),
-                          decoration: BoxDecoration(
-                            color: color['background'],
-                            borderRadius: BorderRadius.circular(4.0),
-                          ),
-                          child: Text(
-                            tag,
-                            style: TextStyle(
-                              color: color['text'],
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.all(8.0),
-                      child: TextField(
-                        decoration: InputDecoration(
-                          hintText: 'Search attachments',
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(Icons.download_outlined),
-                      onPressed: () {
-                        // Add your download functionality here
-                      },
-                    ),
-
-                    //ATTACHMENTS SECTION
-                    const Divider(),
-                    FutureBuilder<List<Map<String, dynamic>>>(
-                      future: fetchAttachments(),
-                      builder: (BuildContext context,
-                          AsyncSnapshot<List<Map<String, dynamic>>> snapshot) {
-                        if (snapshot.connectionState ==
-                            ConnectionState.waiting) {
-                          return const Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              SizedBox(
-                                height: 80,
-                              ),
-                              SizedBox(
-                                height: 50.0,
-                                width: 50.0,
-                                child: CircularProgressIndicator(),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 20.0),
-                                child: Text(
-                                  "Fetching data...",
-                                  style: TextStyle(
-                                      color: Color.fromARGB(255, 119, 118, 118),
-                                      fontSize: 15),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: <Widget>[
+                      //HEADER SECTION
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: <Widget>[
+                            Expanded(
+                              child: Text(
+                                studyMaterialName ?? 'Default Name',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 18.0,
                                 ),
                               ),
-                            ],
-                          );
-                        } else if (snapshot.hasError) {
-                          print('Error: ${snapshot.error}');
-                          return Text('Error: ${snapshot.error}');
-                        } else {
-                          var attachments = snapshot.data;
-                          return Expanded(
-                            child: ListView.builder(
-                              itemCount: attachments?.length,
-                              itemBuilder: (BuildContext context, int index) {
-                                var attachment = attachments?[index];
-                                var url = attachment?['url'];
-                                var title = attachment?['title'];
-                                var extension = url?.split('.').last;
-                                String assetName;
-                                switch (extension) {
-                                  case 'pdf':
-                                    assetName = 'assets/pdf.svg';
-                                    break;
-                                  case 'ppt':
-                                  case 'pptx':
-                                    assetName = 'assets/ppt.svg';
-                                    break;
-                                  case 'doc':
-                                  case 'docx':
-                                    assetName = 'assets/word.svg';
-                                    break;
-                                  default:
-                                    assetName = 'assets/word.svg';
-                                }
-                                return ListTile(
-                                  leading: SvgPicture.asset(assetName),
-                                  title: Text(
-                                    title!,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                  onTap: () {},
-                                );
-                              },
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      //TAGS SECTION
+                      Wrap(
+                        alignment: WrapAlignment.start,
+                        children: studyMaterialTags.map<Widget>((tag) {
+                          var color = tagColors[studyMaterialTags.indexOf(tag) %
+                              tagColors.length];
+                          return Container(
+                            margin: const EdgeInsets.all(4.0),
+                            padding: const EdgeInsets.all(4.0),
+                            decoration: BoxDecoration(
+                              color: color['background'],
+                              borderRadius: BorderRadius.circular(4.0),
+                            ),
+                            child: Text(
+                              tag,
+                              style: TextStyle(
+                                color: color['text'],
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           );
-                        }
-                      },
-                    ),
-                  ],
+                        }).toList(),
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.all(8.0),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            hintText: 'Search attachments',
+                            prefixIcon: Icon(Icons.search),
+                            border: OutlineInputBorder(),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.download_outlined),
+                        onPressed: () {
+                          // Add your download functionality here
+                        },
+                      ),
+
+                      //Dividing the sections
+                      const Divider(),
+
+                      //ATTACHMENTS SECTION
+                      FutureBuilder<List<Map<String, dynamic>>>(
+                        future: fetchAttachments(),
+                        builder: (BuildContext context,
+                            AsyncSnapshot<List<Map<String, dynamic>>>
+                                snapshot) {
+                          if (snapshot.connectionState ==
+                              ConnectionState.waiting) {
+                            return Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: <Widget>[
+                                SizedBox(
+                                  height: screenSize.height *
+                                      0.1, // 10% of the screen height
+                                ),
+                                SizedBox(
+                                  height: screenSize.height *
+                                      0.05, // 5% of the screen height
+                                  width: screenSize.width *
+                                      0.1, // 10% of the screen width
+                                  child: const CircularProgressIndicator(),
+                                ),
+                                Padding(
+                                  padding: EdgeInsets.only(
+                                      top: screenSize.height *
+                                          0.02), // 2% of the screen height
+                                  child: Text(
+                                    "Fetching data...",
+                                    style: TextStyle(
+                                        color: const Color.fromARGB(
+                                            255, 119, 118, 118),
+                                        fontSize: screenSize.width *
+                                            0.03), // 3% of the screen width
+                                  ),
+                                ),
+                              ],
+                            );
+                          } else if (snapshot.hasError) {
+                            print('Error: ${snapshot.error}');
+                            return Text('Error: ${snapshot.error}');
+                          } else {
+                            var attachments = snapshot.data;
+                            if (selectedItems.isEmpty) {
+                              selectedItems =
+                                  List<bool>.filled(attachments!.length, false);
+                            }
+                            return SizedBox(
+                              height: screenSize.height *
+                                  0.7, // 70% of the screen height
+                              child: Column(
+                                children: <Widget>[
+                                  if (selectedItems.any((selected) => selected))
+                                    Row(
+                                      children: <Widget>[
+                                        Text(
+                                            '${selectedItems.where((selected) => selected).length} Attachments selected'),
+                                        IconButton(
+                                          icon: const Icon(Icons.download),
+                                          onPressed: downloadSelectedItems,
+                                        ),
+                                        IconButton(
+                                          icon: const Icon(Icons.clear),
+                                          onPressed: deselectAllItems,
+                                        ),
+                                      ],
+                                    ),
+                                  IconButton(
+                                    icon: Icon(isGridView
+                                        ? Icons.view_list
+                                        : Icons.view_module),
+                                    onPressed: toggleViewMode,
+                                  ),
+                                  isGridView
+                                      ? Expanded(
+                                          child: buildGridView(attachments!))
+                                      : Expanded(
+                                          child: buildListView(attachments!)),
+                                ],
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -259,6 +314,101 @@ class _AttachmentsState extends State<Attachments> {
           }
         },
       ),
+    );
+  }
+
+  Widget buildGridView(List<Map<String, dynamic>> attachments) {
+    var screenSize = MediaQuery.of(context).size;
+    return GridView.builder(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 1, // number of grid columns
+      ),
+      itemCount: attachments.length,
+      itemBuilder: (context, index) {
+        var attachment = attachments[index];
+        var url = attachment['url'];
+        var title = attachment['title'];
+        var date = attachment[
+            'published_date']; // Use 'published_date' instead of 'study_material_attachment_published_date'
+        var extension = url.split('.').last;
+        String assetName = 'assets/word.svg';
+        switch (extension) {
+          case 'pdf':
+            assetName = 'assets/pdf.svg';
+            break;
+          case 'ppt':
+          case 'pptx':
+            assetName = 'assets/ppt.svg';
+            break;
+          case 'doc':
+          case 'docx':
+            assetName = 'assets/word.svg';
+            break;
+          default:
+            assetName = 'assets/word.svg';
+        }
+        return GridTile(
+          child: CheckboxListTile(
+            controlAffinity: ListTileControlAffinity.leading,
+            value: selectedItems[index],
+            onChanged: (bool? value) => selectItem(index),
+            title: SvgPicture.asset(
+              assetName,
+              width: screenSize.width * 0.1,
+              height: screenSize.height * 0.1,
+            ),
+            subtitle: Text('$title\n$date'),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildListView(List<Map<String, dynamic>> attachments) {
+    var screenSize = MediaQuery.of(context).size;
+    return ListView.builder(
+      itemCount: attachments.length,
+      itemBuilder: (context, index) {
+        var attachment = attachments[index];
+        var url = attachment['url'];
+        var title = attachment['title'];
+        var extension = url.split('.').last;
+        String assetName = 'assets/word.svg';
+        switch (extension) {
+          case 'pdf':
+            assetName = 'assets/pdf.svg';
+            break;
+          case 'ppt':
+          case 'pptx':
+            assetName = 'assets/ppt.svg';
+            break;
+          case 'doc':
+          case 'docx':
+            assetName = 'assets/word.svg';
+            break;
+          default:
+            assetName = 'assets/word.svg';
+        }
+        return CheckboxListTile(
+          controlAffinity: ListTileControlAffinity.leading,
+          value: selectedItems[index],
+          onChanged: (bool? value) => selectItem(index),
+          title: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: <Widget>[
+                SvgPicture.asset(
+                  assetName,
+                  width: screenSize.width * 0.1,
+                  height: screenSize.height * 0.1,
+                ),
+                Text(title,
+                    style: TextStyle(fontSize: screenSize.width * 0.03)),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
