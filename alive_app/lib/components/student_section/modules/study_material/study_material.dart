@@ -1,13 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:alive_app/components/student_section/modules/study_material/attachments.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
-import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 
 typedef DownloadLinkGetter = Future<String> Function(int materialId);
@@ -19,7 +18,6 @@ class StudyMaterialData {
   final String subjectname;
   final String institute;
   final int material_id;
-  final List<String> studyMaterialTags;
 
   StudyMaterialData({
     required this.studyMaterialName,
@@ -28,7 +26,6 @@ class StudyMaterialData {
     required this.subjectname,
     required this.institute,
     required this.material_id,
-    required this.studyMaterialTags,
   });
 
   factory StudyMaterialData.fromJson(Map<String, dynamic> json) {
@@ -39,9 +36,6 @@ class StudyMaterialData {
       subjectname: json['subject_name'],
       institute: json['institute'],
       material_id: json['study_material_id'],
-      studyMaterialTags: json['study_material_tags'] is List
-          ? List<String>.from(json['study_material_tags'])
-          : [],
     );
   }
 }
@@ -63,7 +57,7 @@ class _Row {
 }
 
 class _DataSource extends DataTableSource {
-  _DataSource(this.context, this.data, this.getDownloadLink) {
+  _DataSource(this.context, this.data, this.getDownloadLink, this.token) {
     _rows = <_Row>[
       for (var item in data)
         _Row(
@@ -79,10 +73,13 @@ class _DataSource extends DataTableSource {
   final BuildContext context;
   final List<dynamic> data;
   final DownloadLinkGetter getDownloadLink;
+  final String token;
   List<_Row> _rows = [];
 
   @override
-  DataRow getRow(int index) {
+  DataRow getRow(
+    int index,
+  ) {
     assert(index >= 0);
     if (index >= _rows.length) {
       return const DataRow(cells: []);
@@ -92,16 +89,53 @@ class _DataSource extends DataTableSource {
       index: index,
       cells: <DataCell>[
         DataCell(
-          Row(
-            children: <Widget>[
-              SvgPicture.asset('assets/book_icon.svg', height: 25, width: 25),
-              const SizedBox(width: 8),
-              Text(row.studyMaterialName),
-            ],
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Attachments(
+                      key: ValueKey(row.material_id),
+                      materialId: row.material_id,
+                      token: token),
+                ),
+              );
+            },
+            child: Row(
+              children: <Widget>[
+                SvgPicture.asset('assets/book_icon.svg', height: 25, width: 25),
+                const SizedBox(width: 8),
+                Text(row.studyMaterialName),
+              ],
+            ),
           ),
         ),
-        DataCell(Text(row.studyMaterialCreatedBy)),
-        DataCell(Text('${row.subjectname} - ${row.material_id}')),
+        DataCell(GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Attachments(
+                      key: ValueKey(row.material_id),
+                      materialId: row.material_id,
+                      token: token),
+                ),
+              );
+            },
+            child: Text(row.studyMaterialCreatedBy))),
+        DataCell(GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Attachments(
+                      key: ValueKey(row.material_id),
+                      materialId: row.material_id,
+                      token: token),
+                ),
+              );
+            },
+            child: Text('${row.subjectname} - ${row.material_id}'))),
         DataCell(
           const Icon(Icons.download_rounded),
           onTap: () async {
@@ -112,15 +146,8 @@ class _DataSource extends DataTableSource {
             if (directoryPath == null) {
               return;
             }
-            if (urls.length == 1) {
-              await downloadSingleFile(
-                urls[0],
-                directoryPath,
-              );
-            } else {
-              await downloadMultipleFiles(
-                  urls, directoryPath, row.studyMaterialName);
-            }
+            await downloadMultipleFiles(
+                urls, directoryPath, row.studyMaterialName);
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(
                 content: Text('Download completed!'),
@@ -244,67 +271,8 @@ class _StudyMaterialState extends State<StudyMaterial> {
       searchText = query;
       if (query.isEmpty) {
         dataFuture = fetchData(dropdownValue);
-      } else {
-        // Make two API calls: one by material_id and another by subject_code
-        Future<List<StudyMaterialData>> futureMaterialsById =
-            fetchMaterialsById(query);
-        Future<List<StudyMaterialData>> futureMaterialsBySubject =
-            fetchMaterialsBySubject(query);
-
-        // Combine the results from both API calls
-        dataFuture =
-            Future.wait([futureMaterialsById, futureMaterialsBySubject])
-                .then((results) {
-          var allResults = <StudyMaterialData>[];
-          allResults.addAll(results[0]);
-          allResults.addAll(results[1]);
-          return allResults;
-        });
       }
     });
-  }
-
-  //FOR getting the study materials by id
-  Future<List<StudyMaterialData>> fetchMaterialsById(String materialId) async {
-    var headers = {'Authorization': 'Bearer ${widget.token}'};
-    var request = http.Request(
-        'GET',
-        Uri.parse(
-            'https://studymaterial-api.alive.university/api/study-material/$materialId'));
-    request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    if (response.statusCode == 200) {
-      var responseBody = await response.stream.bytesToString();
-      var jsonResponse = json.decode(responseBody);
-      List materials = jsonResponse['data']['materials'] ?? [];
-      return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
-    } else {
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${await response.stream.bytesToString()}');
-      throw Exception('Failed to load study materials by id');
-    }
-  }
-
-  //FOR getting the study materials by subject
-  Future<List<StudyMaterialData>> fetchMaterialsBySubject(
-      String subjectCode) async {
-    var headers = {'Authorization': 'Bearer ${widget.token}'};
-    var request = http.Request(
-        'GET',
-        Uri.parse(
-            'https://studymaterial-api.alive.university/api/study-material/subject-materials?subject=$subjectCode'));
-    request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    if (response.statusCode == 200) {
-      var responseBody = await response.stream.bytesToString();
-      var jsonResponse = json.decode(responseBody);
-      List materials = jsonResponse['data']['materials'] ?? [];
-      return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
-    } else {
-      print('Response status: ${response.statusCode}');
-      print('Response body: ${await response.stream.bytesToString()}');
-      throw Exception('Failed to load study materials by id');
-    }
   }
 
   //FOR getting the study materials
@@ -637,7 +605,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                 ),
                               ],
                               source: _DataSource(context, snapshot.data ?? [],
-                                  getDownloadLink),
+                                  getDownloadLink, widget.token),
                             ),
                           );
                         }
