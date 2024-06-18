@@ -1,9 +1,14 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:intl/intl.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:archive/archive.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 
 class Attachments extends StatefulWidget {
   final int materialId;
@@ -22,6 +27,8 @@ class Attachments extends StatefulWidget {
 class _AttachmentsState extends State<Attachments> {
   bool isGridView = true;
   List<bool> selectedItems = [];
+  Color gridViewIconColor = Colors.blue;
+  Color listViewIconColor = Colors.grey;
 
   @override
   void initState() {
@@ -31,6 +38,13 @@ class _AttachmentsState extends State<Attachments> {
   void toggleViewMode() {
     setState(() {
       isGridView = !isGridView;
+      if (isGridView) {
+        gridViewIconColor = Colors.blue;
+        listViewIconColor = Colors.grey;
+      } else {
+        gridViewIconColor = Colors.grey;
+        listViewIconColor = Colors.blue;
+      }
     });
   }
 
@@ -48,6 +62,29 @@ class _AttachmentsState extends State<Attachments> {
 
   void downloadSelectedItems() {
     // Add your download functionality here
+  }
+
+  //fetching the download links acc to material id
+  Future<List<String>> fetchDownloadLink(int materialId) async {
+    var headers = {
+      'Authorization': 'Bearer ${widget.token}',
+    };
+    var request = http.Request(
+      'GET',
+      Uri.parse(
+          'https://studymaterial-api.alive.university/api/study-material/$materialId/download'),
+    );
+    request.headers.addAll(headers);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      String responseBody = await response.stream.bytesToString();
+      var jsonData = jsonDecode(responseBody);
+      print('jsonData: $jsonData');
+      print('jsonData[data]: ${jsonData['data']}');
+      return List<String>.from(jsonData['data']);
+    } else {
+      throw Exception('Failed to fetch download link');
+    }
   }
 
   //TO fetch the study material name and tags
@@ -103,14 +140,13 @@ class _AttachmentsState extends State<Attachments> {
             DateTime parsedDate =
                 DateTime.parse(item['study_material_attachment_published_date'])
                     .toLocal();
-            String formattedDate = DateFormat('dd/MM/yyyy, hh:mm a')
-                .format(parsedDate); // Change the format string
+            String formattedDate =
+                DateFormat('dd/MM/yyyy, hh:mm a').format(parsedDate);
 
             return {
               'url': item['study_material_attachment_url'],
               'title': item['study_material_attachment_title'],
-              'published_date':
-                  formattedDate, // Add the formatted date to the map
+              'published_date': formattedDate,
             };
           })
           .toList()
@@ -119,6 +155,54 @@ class _AttachmentsState extends State<Attachments> {
     } else {
       throw Exception('Failed to load attachments');
     }
+  }
+
+  // This function is to download Single url file
+  Future<File> downloadSingleFile(String url, String directoryPath) async {
+    final response = await http.get(Uri.parse(url));
+    var fileBytes = response.bodyBytes;
+    String fileName = p.basename(Uri.parse(url).path);
+    final filePath = '$directoryPath/$fileName';
+    final file = File(filePath);
+    try {
+      await file.writeAsBytes(fileBytes);
+      return file;
+    } catch (e) {
+      print('Could not save the file $filePath. Error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> downloadMultipleFiles(
+      List<String> urls, String directoryPath, String studyMaterialName) async {
+    final dir = Directory(directoryPath);
+    if (!dir.existsSync()) {
+      dir.createSync(recursive: true);
+    }
+
+    List<File> files = [];
+    for (var url in urls) {
+      try {
+        var file = await downloadSingleFile(url, directoryPath);
+        files.add(file);
+      } catch (e) {
+        print('Could not download the file from $url. Error: $e');
+      }
+    }
+
+    final archive = Archive();
+
+    for (var file in files) {
+      final bytes = file.readAsBytesSync();
+      final fileName = p.basename(file.path);
+      archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+
+      file.deleteSync();
+    }
+
+    final zipEncoder = ZipEncoder();
+    final zipFile = File('$directoryPath/$studyMaterialName.zip');
+    zipFile.writeAsBytesSync(zipEncoder.encode(archive)!);
   }
 
   @override
@@ -211,11 +295,69 @@ class _AttachmentsState extends State<Attachments> {
                           ),
                         ),
                       ),
-                      IconButton(
-                        icon: const Icon(Icons.download_outlined),
-                        onPressed: () {
-                          // Add your download functionality here
-                        },
+                      Container(
+                        padding:
+                            EdgeInsets.only(right: screenSize.width * 0.03),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: <Widget>[
+                            IconButton(
+                              icon: const Icon(Icons.download_outlined),
+                              onPressed: () async {
+                                List<String> urls =
+                                    await fetchDownloadLink(widget.materialId);
+                                final directoryPath = await FilePicker.platform
+                                    .getDirectoryPath();
+                                if (directoryPath == null) {
+                                  return;
+                                }
+
+                                // Create the directory if it does not exist
+                                final dir = Directory(directoryPath);
+                                if (!dir.existsSync()) {
+                                  dir.createSync(recursive: true);
+                                }
+
+                                await downloadMultipleFiles(
+                                    urls, directoryPath, studyMaterialName);
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('Download completed!'),
+                                  ),
+                                );
+                              },
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFEFF6FF),
+                                border:
+                                    Border.all(color: const Color(0xFFD9D9D9)),
+                                borderRadius:
+                                    const BorderRadius.all(Radius.circular(30)),
+                              ),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    icon: Icon(Icons.view_list,
+                                        color: listViewIconColor),
+                                    onPressed: () {
+                                      if (!isGridView) return;
+                                      toggleViewMode();
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: Icon(Icons.view_module,
+                                        color: gridViewIconColor),
+                                    onPressed: () {
+                                      if (isGridView) return;
+                                      toggleViewMode();
+                                    },
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
 
                       //Dividing the sections
@@ -229,35 +371,7 @@ class _AttachmentsState extends State<Attachments> {
                                 snapshot) {
                           if (snapshot.connectionState ==
                               ConnectionState.waiting) {
-                            return Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: <Widget>[
-                                SizedBox(
-                                  height: screenSize.height *
-                                      0.1, // 10% of the screen height
-                                ),
-                                SizedBox(
-                                  height: screenSize.height *
-                                      0.05, // 5% of the screen height
-                                  width: screenSize.width *
-                                      0.1, // 10% of the screen width
-                                  child: const CircularProgressIndicator(),
-                                ),
-                                Padding(
-                                  padding: EdgeInsets.only(
-                                      top: screenSize.height *
-                                          0.02), // 2% of the screen height
-                                  child: Text(
-                                    "Fetching data...",
-                                    style: TextStyle(
-                                        color: const Color.fromARGB(
-                                            255, 119, 118, 118),
-                                        fontSize: screenSize.width *
-                                            0.03), // 3% of the screen width
-                                  ),
-                                ),
-                              ],
-                            );
+                            return Container();
                           } else if (snapshot.hasError) {
                             print('Error: ${snapshot.error}');
                             return Text('Error: ${snapshot.error}');
@@ -268,31 +382,36 @@ class _AttachmentsState extends State<Attachments> {
                                   List<bool>.filled(attachments!.length, false);
                             }
                             return SizedBox(
-                              height: screenSize.height *
-                                  0.7, // 70% of the screen height
+                              height: screenSize.height * 0.7,
                               child: Column(
                                 children: <Widget>[
                                   if (selectedItems.any((selected) => selected))
-                                    Row(
-                                      children: <Widget>[
-                                        Text(
-                                            '${selectedItems.where((selected) => selected).length} Attachments selected'),
-                                        IconButton(
-                                          icon: const Icon(Icons.download),
-                                          onPressed: downloadSelectedItems,
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.clear),
-                                          onPressed: deselectAllItems,
-                                        ),
-                                      ],
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFFEFF6FF),
+                                        border: Border.all(
+                                            color: const Color(0xFFD9D9D9)),
+                                        borderRadius: const BorderRadius.all(
+                                            Radius.circular(1)),
+                                      ),
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        children: <Widget>[
+                                          IconButton(
+                                            icon: const Icon(Icons.clear),
+                                            onPressed: deselectAllItems,
+                                          ),
+                                          Text(
+                                              '${selectedItems.where((selected) => selected).length} Attachments selected'),
+                                          IconButton(
+                                            icon: const Icon(
+                                                Icons.download_outlined),
+                                            onPressed: downloadSelectedItems,
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                  IconButton(
-                                    icon: Icon(isGridView
-                                        ? Icons.view_list
-                                        : Icons.view_module),
-                                    onPressed: toggleViewMode,
-                                  ),
                                   isGridView
                                       ? Expanded(
                                           child: buildGridView(attachments!))
@@ -356,6 +475,7 @@ class _AttachmentsState extends State<Attachments> {
               assetName,
               width: screenSize.width * 0.1,
               height: screenSize.height * 0.1,
+              placeholderBuilder: (BuildContext context) => Container(),
             ),
             subtitle: Text('$title\n$date'),
           ),

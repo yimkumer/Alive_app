@@ -22,6 +22,7 @@ dev_dependencies:
   archive: ^3.6.1
   url_launcher: ^6.0.12
   intl: ^0.17.0
+  provider: ^6.0.1
 
 flutter:
   uses-material-design: true
