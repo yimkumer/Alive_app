@@ -1,5 +1,6 @@
 import 'package:alive_app/components/login/login.dart';
 import 'package:alive_app/components/splash/splash.dart';
+import 'package:alive_app/components/splash/walkthrough.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -18,6 +19,7 @@ class MainApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const Splash(),
+        '/walkthrough': (context) => const Walkthrough(),
         '/login': (context) => const Login(),
       },
     );
