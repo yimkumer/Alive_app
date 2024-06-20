@@ -65,7 +65,7 @@ class _StudentState extends State<Student> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Login Success'),
-          duration: Durations.medium2,
+          duration: Durations.medium4,
         ),
       );
     });

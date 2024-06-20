@@ -59,85 +59,158 @@ class _LoginState extends State<Login> {
   @override
   Widget build(BuildContext context) {
     localContext = context;
-    return DefaultTabController(
-      length: 2,
-      child: Scaffold(
-        appBar: AppBar(
-          bottom: TabBar(
-            indicatorColor: const Color(0xFFF28F06),
-            tabs: const [
-              Tab(
-                  child: Text('STUDENT',
-                      style:
-                          TextStyle(color: Color(0xFF2497EA), fontSize: 15))),
-              Tab(
-                  child: Text('FACULTY',
-                      style:
-                          TextStyle(color: Color(0xFF2497EA), fontSize: 15))),
-            ],
-            onTap: (index) {
-              setState(() {
-                _currentTabIndex = index;
-              });
-            },
-          ),
-        ),
-        body: LoginForm(
-          formKey: _formKey,
-          usernameController: _usernameController,
-          passwordController: _passwordController,
-          onTogglePasswordVisibility: _togglePasswordVisibility,
-          obscureText: _obscureText,
-          onLogin: (username, password) async {
-            if (username.isEmpty || password.isEmpty) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please fill up the fields!')),
-              );
-            } else {
-              try {
-                var jsonResponse = await _authService.login(username, password,
-                    _currentTabIndex == 0 ? "STUDENT" : "FACULTY");
-                String token = jsonResponse['token'];
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: DefaultTabController(
+        length: 2,
+        child: Scaffold(
+          body: Column(children: [
+            Container(
+              margin: const EdgeInsets.fromLTRB(20, 20, 0, 0),
+              child: Row(
+                children: [
+                  Image.asset(
+                    'assets/logow.png',
+                    fit: BoxFit.contain,
+                    height: 70,
+                    width: 50,
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(8.0),
+                    child: const Text(
+                      'Alive',
+                      style: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 38,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(
+              height: 80,
+            ),
+            Center(
+              child: Card(
+                elevation: 1,
+                child: IntrinsicWidth(
+                  child: TabBar(
+                    indicator: BoxDecoration(
+                      borderRadius: BorderRadius.circular(08),
+                      gradient: const LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Color(0xFFF66B4D),
+                          Color(0xFFE65E65),
+                          Color(0xFFCC468C),
+                        ],
+                      ),
+                    ),
+                    labelColor: Colors.white,
+                    unselectedLabelColor: Colors.black,
+                    tabs: [
+                      Tab(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: const Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Student',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                          ),
+                        ),
+                      ),
+                      Tab(
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: const Align(
+                            alignment: Alignment.center,
+                            child: Text(
+                              'Faculty',
+                              style: TextStyle(fontSize: 15),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                    onTap: (index) {
+                      setState(() {
+                        _currentTabIndex = index;
+                      });
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Expanded(
+              child: LoginForm(
+                formKey: _formKey,
+                usernameController: _usernameController,
+                passwordController: _passwordController,
+                onTogglePasswordVisibility: _togglePasswordVisibility,
+                obscureText: _obscureText,
+                onLogin: (username, password) async {
+                  if (username.isEmpty || password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text('Please fill up the fields!')),
+                    );
+                  } else {
+                    try {
+                      var jsonResponse = await _authService.login(
+                          username,
+                          password,
+                          _currentTabIndex == 0 ? "STUDENT" : "FACULTY");
+                      String token = jsonResponse['token'];
 
-                if (jsonResponse['status'] == true) {
-                  FocusScope.of(localContext).requestFocus(FocusNode());
-                  Navigator.push(
-                    localContext,
-                    MaterialPageRoute(
-                        builder: (context) => const LoadingScreen()),
-                  );
+                      if (jsonResponse['status'] == true) {
+                        FocusScope.of(localContext).requestFocus(FocusNode());
+                        Navigator.push(
+                          localContext,
+                          MaterialPageRoute(
+                              builder: (context) => const LoadingScreen()),
+                        );
 
-                  WidgetsBinding.instance.addPostFrameCallback((_) async {
-                    await Future.delayed(const Duration(seconds: 3));
+                        WidgetsBinding.instance.addPostFrameCallback((_) async {
+                          await Future.delayed(const Duration(seconds: 3));
 
-                    Navigator.pop(localContext);
+                          Navigator.pop(localContext);
 
-                    if (_currentTabIndex == 0) {
-                      Navigator.pushReplacement(
-                        localContext,
-                        MaterialPageRoute(
-                            builder: (context) => Student(token: token)),
+                          if (_currentTabIndex == 0) {
+                            Navigator.pushReplacement(
+                              localContext,
+                              MaterialPageRoute(
+                                  builder: (context) => Student(token: token)),
+                            );
+                          }
+                        });
+                      } else if (jsonResponse['status'] != true) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                              content: Text('Wrong username or password')),
+                        );
+                      }
+                    } catch (e) {
+                      String errorMessage;
+                      if (e is SocketException) {
+                        errorMessage = 'No Internet connection';
+                      } else {
+                        errorMessage = 'Failed to connect to the server';
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(errorMessage)),
                       );
                     }
-                  });
-                } else if (jsonResponse['status'] != true) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Wrong username or password')),
-                  );
-                }
-              } catch (e) {
-                String errorMessage;
-                if (e is SocketException) {
-                  errorMessage = 'No Internet connection';
-                } else {
-                  errorMessage = 'Failed to connect to the server';
-                }
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(errorMessage)),
-                );
-              }
-            }
-          },
+                  }
+                },
+              ),
+            ),
+          ]),
         ),
       ),
     );
