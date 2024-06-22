@@ -58,7 +58,7 @@ class AcademicProgress extends StatelessWidget {
           Card(
             elevation: 5,
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: color, width: 2.0),
+              side: BorderSide(color: color, width: 1.0),
               borderRadius: BorderRadius.circular(7.0),
             ),
             child: Padding(
@@ -75,8 +75,8 @@ class AcademicProgress extends StatelessWidget {
           Card(
             elevation: 5,
             shape: RoundedRectangleBorder(
-              side: BorderSide(color: color, width: 2.0),
-              borderRadius: BorderRadius.circular(7.0),
+              side: BorderSide(color: color, width: 1.0),
+              borderRadius: BorderRadius.circular(8.0),
             ),
             child: Padding(
               padding: const EdgeInsets.symmetric(vertical: 16.0),
@@ -87,7 +87,7 @@ class AcademicProgress extends StatelessWidget {
                   lineWidth: 9.0,
                   percent: percent,
                   center: Text(
-                    "${(percent * 100).toStringAsFixed(1)}%",
+                    "${(percent * 100).toInt()}%",
                     style: const TextStyle(
                         color: Colors.black,
                         fontSize: 16,

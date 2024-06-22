@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'calendar.dart';
 import 'leaderboard.dart';
 import 'profile_section.dart';
 import 'academic_progress.dart';
+import 'semsubjects.dart';
 
 class std_home extends StatelessWidget {
   final String token;
@@ -10,13 +12,15 @@ class std_home extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: SingleChildScrollView(
         child: Column(
           children: [
-            ProfileSection(),
-            AcademicProgress(),
-            Leaderboard(),
+            const ProfileSection(),
+            const AcademicProgress(),
+            const Leaderboard(),
+            const Calendar(),
+            Semsubjects(token: token),
           ],
         ),
       ),

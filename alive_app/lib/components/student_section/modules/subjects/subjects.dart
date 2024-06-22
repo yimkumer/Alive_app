@@ -87,8 +87,6 @@ class _SubjectsState extends State<Subjects> {
 
       return subjects;
     } else {
-      print('Status code: ${response.statusCode}');
-      print('Response body: ${await response.stream.bytesToString()}');
       throw Exception('Failed to load data');
     }
   }
