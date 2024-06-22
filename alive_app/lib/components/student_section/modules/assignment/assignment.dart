@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class Assignment extends StatefulWidget {
   final String token;
@@ -10,15 +11,85 @@ class Assignment extends StatefulWidget {
 
 class _AssignmentState extends State<Assignment> {
   @override
-  void initState() {
-    super.initState();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Column(
-        children: [Center(child: Text("Assignment Page"))],
+    return Scaffold(
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(5.0),
+          child: Card(
+            elevation: 8,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Form(
+                child: Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                      colors: [
+                        Color(0xFFE6711E),
+                        Color(0xFFE98815),
+                        Color(0xFFEEA50B),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(10),
+                      topRight: Radius.circular(10),
+                    ),
+                  ),
+                  padding: const EdgeInsets.all(25),
+                  child: const Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Assignments",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w500),
+                      ),
+                      SizedBox(height: 2),
+                      Text(
+                        "View all your assignments here",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400),
+                      ),
+                    ],
+                  ),
+                ),
+                // SVG Picture just below the top container
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Container(
+                    color: const Color(
+                        0xFFFCFCFC), // Set the background color of the container
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.35,
+                            child: SvgPicture.asset("assets/noassignment.svg")),
+                        const SizedBox(height: 16),
+                        const Text(
+                          "No Assignment Just Relax!",
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.w500),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            )),
+          ),
+        ),
       ),
     );
   }
