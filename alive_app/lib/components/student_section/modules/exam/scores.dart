@@ -12,7 +12,6 @@ class _ScoresState extends State<Scores> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

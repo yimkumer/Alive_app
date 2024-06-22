@@ -26,15 +26,28 @@ class _CustomAppBarState extends State<CustomAppBar> {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      leading: _buildMenuButton(context),
-      title: Text(
-        widget.drawerItems[widget.selectedDrawerIndex],
-        style: const TextStyle(color: Colors.black),
+      title: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          _buildProfileButton(context),
+          const SizedBox(width: 10),
+          Image.asset(
+            'assets/logor.png',
+            height: 30,
+            width: 30,
+          ),
+          const Text(
+            "Alive",
+            style: TextStyle(
+                color: Color(0xff05004E),
+                fontSize: 20,
+                fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
       backgroundColor: Colors.white,
       actions: <Widget>[
         _buildSettingsButton(context),
-        _buildProfileButton(context),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
@@ -43,13 +56,6 @@ class _CustomAppBarState extends State<CustomAppBar> {
           height: 0.2,
         ),
       ),
-    );
-  }
-
-  IconButton _buildMenuButton(BuildContext context) {
-    return IconButton(
-      icon: const Icon(Icons.menu, color: Colors.black),
-      onPressed: () => Scaffold.of(context).openDrawer(),
     );
   }
 
@@ -113,22 +119,19 @@ class _CustomAppBarState extends State<CustomAppBar> {
                     ),
                     const Text(
                       'AIT22MCAV043',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w300,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w300),
                       textAlign: TextAlign.center,
                     ),
                     const Text(
                       'Student',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w300,
-                      ),
+                      style: TextStyle(fontWeight: FontWeight.w300),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(
                       height: 15,
                     ),
                     Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
                         const Icon(Icons.logout, color: Colors.red),
                         GestureDetector(

@@ -12,7 +12,6 @@ import 'package:alive_app/components/student_section/modules/homepage/std_home.d
 import 'package:alive_app/components/student_section/modules/study_material/study_material.dart';
 import 'package:alive_app/components/student_section/modules/subjects/subjects.dart';
 import 'package:alive_app/components/student_section/custom_app_bar.dart';
-import 'package:alive_app/components/student_section/custom_drawer.dart';
 import 'package:flutter/material.dart';
 
 class Student extends StatefulWidget {
@@ -31,7 +30,7 @@ class _StudentState extends State<Student> {
   final drawerItems = [
     'Home',
     'Subjects',
-    'Study Material',
+    'Materials',
     'Assignment',
     'Exams',
     'Scores',
@@ -137,18 +136,79 @@ class _StudentState extends State<Student> {
             });
           },
         ),
-        drawer: CustomDrawer(
-          selectedDrawerIndex: _selectedDrawerIndex,
-          drawerItems: drawerItems,
-          drawerIcons: drawerIcons,
-          onItemSelected: (index) {
-            setState(() {
-              _selectedDrawerIndex = index;
-            });
-          },
-        ),
         body: _getDrawerItemWidget(_selectedDrawerIndex),
+        bottomNavigationBar: BottomNavigationBar(
+          type: BottomNavigationBarType.fixed,
+          currentIndex: _selectedDrawerIndex < 4 ? _selectedDrawerIndex : 4,
+          items: [
+            BottomNavigationBarItem(
+                icon: Icon(drawerIcons[0]), label: drawerItems[0]),
+            BottomNavigationBarItem(
+                icon: Icon(drawerIcons[1]), label: drawerItems[1]),
+            BottomNavigationBarItem(
+                icon: Icon(drawerIcons[2]), label: drawerItems[2]),
+            BottomNavigationBarItem(
+                icon: Icon(drawerIcons[3]), label: drawerItems[3]),
+            const BottomNavigationBarItem(
+                icon: Icon(Icons.grid_view), label: 'Menu'),
+          ],
+          onTap: (index) {
+            if (index < 4) {
+              setState(() {
+                _selectedDrawerIndex = index;
+              });
+            } else {
+              _showGridMenu(context);
+            }
+          },
+          elevation: 8.0,
+          selectedItemColor: Colors.blue,
+        ),
       ),
+    );
+  }
+
+  void _showGridMenu(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (BuildContext context) {
+        double gridHeight = MediaQuery.of(context).size.height * 0.5;
+
+        return SizedBox(
+          height: gridHeight,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10.0),
+            child: GridView.builder(
+              itemCount: drawerItems.length - 4,
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 3),
+              itemBuilder: (BuildContext context, int index) {
+                int itemIndex = index + 4;
+                return InkWell(
+                  onTap: () {
+                    setState(() {
+                      _selectedDrawerIndex = itemIndex;
+                      Navigator.pop(context);
+                    });
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: <Widget>[
+                        Icon(drawerIcons[itemIndex], size: 38),
+                        Text(drawerItems[itemIndex],
+                            textAlign: TextAlign.center),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 }

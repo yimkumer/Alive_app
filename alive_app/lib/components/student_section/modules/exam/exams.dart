@@ -12,7 +12,6 @@ class _ExamsState extends State<Exams> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

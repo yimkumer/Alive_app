@@ -12,7 +12,6 @@ class _AcademicsState extends State<Academics> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

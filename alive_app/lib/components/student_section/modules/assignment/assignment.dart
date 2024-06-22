@@ -12,7 +12,6 @@ class _AssignmentState extends State<Assignment> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

@@ -12,7 +12,6 @@ class _ExploreState extends State<Explore> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

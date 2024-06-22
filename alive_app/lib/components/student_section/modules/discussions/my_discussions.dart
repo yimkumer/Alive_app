@@ -12,7 +12,6 @@ class _MyDiscussionsState extends State<MyDiscussions> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

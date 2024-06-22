@@ -12,7 +12,6 @@ class _AiState extends State<Ai> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override

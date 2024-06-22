@@ -13,7 +13,6 @@ class _ResumeState extends State<Resume> {
   @override
   void initState() {
     super.initState();
-    print('Token: ${widget.token}');
   }
 
   @override
