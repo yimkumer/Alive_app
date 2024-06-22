@@ -43,14 +43,10 @@ class ProfileSection extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Profile',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
-                  ),
                   Container(
                     margin: const EdgeInsets.fromLTRB(0, 15, 10, 0),
-                    width: 80,
-                    height: 80,
+                    width: 90,
+                    height: 90,
                     decoration: BoxDecoration(
                       color: Colors.grey,
                       border: Border.all(

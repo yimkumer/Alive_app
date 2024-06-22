@@ -182,7 +182,8 @@ class _StudentState extends State<Student> {
             child: GridView.builder(
               itemCount: drawerItems.length - 4,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 3),
+                crossAxisCount: 3,
+              ),
               itemBuilder: (BuildContext context, int index) {
                 int itemIndex = index + 4;
                 return InkWell(
@@ -197,7 +198,7 @@ class _StudentState extends State<Student> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: <Widget>[
-                        Icon(drawerIcons[itemIndex], size: 38),
+                        Icon(drawerIcons[itemIndex], size: 30),
                         Text(drawerItems[itemIndex],
                             textAlign: TextAlign.center),
                       ],
