@@ -72,7 +72,7 @@ class CustomDrawer extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8.0),
         child: Image.asset(
-          'assets/alivelogo.png',
+          'assets/logor.png',
           fit: BoxFit.contain,
         ),
       ),

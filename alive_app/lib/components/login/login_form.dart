@@ -1,7 +1,7 @@
 import 'package:alive_app/components/login/bottom.dart';
 import 'package:flutter/material.dart';
 
-class LoginForm extends StatelessWidget {
+class LoginForm extends StatefulWidget {
   final GlobalKey<FormState> formKey;
   final TextEditingController usernameController;
   final TextEditingController passwordController;
@@ -20,9 +20,22 @@ class LoginForm extends StatelessWidget {
   });
 
   @override
+  State<LoginForm> createState() => _LoginFormState();
+}
+
+class _LoginFormState extends State<LoginForm> {
+  bool _obscureText = true;
+
+  void _togglePasswordVisibility() {
+    setState(() {
+      _obscureText = !_obscureText;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Form(
-      key: formKey,
+      key: widget.formKey,
       child: ListView(
         children: <Widget>[
           const SizedBox(
@@ -40,7 +53,7 @@ class LoginForm extends StatelessWidget {
                   ),
                 ),
                 TextFormField(
-                  controller: usernameController,
+                  controller: widget.usernameController,
                   decoration: const InputDecoration(
                     hintText: 'Enter your AUID',
                     border: OutlineInputBorder(
@@ -63,16 +76,22 @@ class LoginForm extends StatelessWidget {
                   ),
                 ),
                 TextFormField(
-                  controller: passwordController,
-                  obscureText: obscureText,
-                  decoration: const InputDecoration(
+                  controller: widget.passwordController,
+                  obscureText: _obscureText,
+                  decoration: InputDecoration(
                     hintText: 'Enter your password',
-                    border: OutlineInputBorder(
+                    border: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                     ),
-                    focusedBorder: OutlineInputBorder(
+                    focusedBorder: const OutlineInputBorder(
                       borderRadius: BorderRadius.all(Radius.circular(8)),
                       borderSide: BorderSide(color: Colors.blue),
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureText ? Icons.visibility_off : Icons.visibility,
+                      ),
+                      onPressed: _togglePasswordVisibility,
                     ),
                   ),
                 ),
@@ -89,7 +108,8 @@ class LoginForm extends StatelessWidget {
                       ),
                     ),
                     onPressed: () {
-                      onLogin(usernameController.text, passwordController.text);
+                      widget.onLogin(widget.usernameController.text,
+                          widget.passwordController.text);
                     },
                     child: const Text('SIGN IN'),
                   ),
