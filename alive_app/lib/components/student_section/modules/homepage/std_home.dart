@@ -19,7 +19,7 @@ class std_home extends StatelessWidget {
             const ProfileSection(),
             const AcademicProgress(),
             const Leaderboard(),
-            const Calendar(),
+            Calendar(token: token),
             Semsubjects(token: token),
           ],
         ),
