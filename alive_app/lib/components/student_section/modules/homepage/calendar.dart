@@ -168,6 +168,7 @@ class _CalendarState extends State<Calendar> {
                 DateTime day = startOfWeek.add(Duration(days: index));
                 List<ClassInfo>? dailyClasses = classesByDate[day];
                 bool isToday = day.compareTo(today) == 0;
+                bool isFuture = day.isAfter(DateTime.now());
                 return SizedBox(
                   width: containerWidth,
                   child: Column(
@@ -182,8 +183,9 @@ class _CalendarState extends State<Calendar> {
                                         height: containerHeight + 20,
                                         decoration: BoxDecoration(
                                           color: isToday
-                                              ? const Color(0xFFFF6714)
-                                              : Colors.transparent,
+                                              ? const Color(0xFF8800C9)
+                                              : const Color.fromARGB(
+                                                  255, 247, 244, 244),
                                           border: Border.all(
                                             color: const Color(0xFFDADADA),
                                             width: 1.0,
@@ -199,9 +201,10 @@ class _CalendarState extends State<Calendar> {
                                               classInfo.subjectNameShort,
                                               style: TextStyle(
                                                 fontSize: 15.0,
-                                                color: isToday
-                                                    ? Colors.white
+                                                color: isFuture
+                                                    ? const Color(0xFFFF6714)
                                                     : Colors.black,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                               overflow: TextOverflow.clip,
                                             ),
@@ -209,9 +212,10 @@ class _CalendarState extends State<Calendar> {
                                               classInfo.interval,
                                               style: TextStyle(
                                                 fontSize: 10.0,
-                                                color: isToday
-                                                    ? Colors.white
+                                                color: isFuture
+                                                    ? const Color(0xFFFF6714)
                                                     : Colors.black,
+                                                fontWeight: FontWeight.w500,
                                               ),
                                               overflow: TextOverflow.clip,
                                             ),
