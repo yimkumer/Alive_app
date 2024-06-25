@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:alive_app/components/faculty_section/faculty.dart';
 import 'package:alive_app/components/login/loading_screen.dart';
 import 'package:alive_app/components/student_section/student.dart';
@@ -14,28 +13,27 @@ class AuthService {
     var headers = {'Content-Type': 'application/json'};
     var body = json.encode(
         {"username": username, "password": password, "usertype": userType});
-
     try {
       var response = await http.post(
         Uri.parse('https://api.alive.university/api/v1/login/erp'),
         headers: headers,
         body: body,
       );
-
       if (response.statusCode == 200) {
         return jsonDecode(response.body);
       } else {
-        throw Exception('Failed to connect to the server');
+        final Map<String, dynamic> responseBody = jsonDecode(response.body);
+        String errorMessage = responseBody['message'];
+        throw Exception(errorMessage);
       }
-    } catch (e) {
-      throw Exception('An error occurred: $e');
+    } on SocketException {
+      throw Exception('No Internet connection');
     }
   }
 }
 
 class Login extends StatefulWidget {
   const Login({super.key});
-
   @override
   _LoginState createState() => _LoginState();
 }
@@ -45,9 +43,7 @@ class _LoginState extends State<Login> {
   final _formKey = GlobalKey<FormState>();
   final _usernameController = TextEditingController();
   final _passwordController = TextEditingController();
-  late BuildContext localContext;
   int _currentTabIndex = 0;
-
   final AuthService _authService = AuthService();
 
   void _togglePasswordVisibility() {
@@ -58,7 +54,6 @@ class _LoginState extends State<Login> {
 
   @override
   Widget build(BuildContext context) {
-    localContext = context;
     return GestureDetector(
       onTap: () {
         FocusScope.of(context).unfocus();
@@ -158,7 +153,9 @@ class _LoginState extends State<Login> {
                   if (username.isEmpty || password.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                          content: Text('Please fill up the fields!')),
+                        content: Text('Please fill up the fields!'),
+                        duration: Durations.long1,
+                      ),
                     );
                   } else {
                     try {
@@ -167,44 +164,39 @@ class _LoginState extends State<Login> {
                           password,
                           _currentTabIndex == 0 ? "STUDENT" : "FACULTY");
                       String token = jsonResponse['token'];
-
                       if (jsonResponse['status'] == true) {
-                        FocusScope.of(localContext).requestFocus(FocusNode());
-                        Navigator.push(
-                          localContext,
-                          MaterialPageRoute(
-                              builder: (context) => const LoadingScreen()),
+                        FocusScope.of(context).requestFocus(FocusNode());
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (BuildContext dialogContext) {
+                            return const LoadingScreen();
+                          },
                         );
 
-                        WidgetsBinding.instance.addPostFrameCallback((_) async {
-                          await Future.delayed(const Duration(seconds: 3));
+                        await Future.delayed(const Duration(seconds: 3));
 
-                          Navigator.pop(localContext);
+                        Navigator.pop(context);
 
-                          if (_currentTabIndex == 0) {
-                            Navigator.pushReplacement(
-                              localContext,
-                              MaterialPageRoute(
-                                  builder: (context) => Student(token: token)),
-                            );
-                          }
-                        });
-                      } else if (jsonResponse['status'] != true) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                              content: Text('Wrong username or password')),
-                        );
+                        if (_currentTabIndex == 0) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Student(token: token)),
+                          );
+                        } else if (_currentTabIndex == 1) {
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => Faculty(token: token)),
+                          );
+                        }
                       }
                     } catch (e) {
-                      String errorMessage;
-                      if (e is SocketException) {
-                        errorMessage = 'No Internet connection';
-                      } else {
-                        errorMessage = 'Failed to connect to the server';
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(errorMessage)),
-                      );
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(e.toString()),
+                        duration: Durations.long1,
+                      ));
                     }
                   }
                 },

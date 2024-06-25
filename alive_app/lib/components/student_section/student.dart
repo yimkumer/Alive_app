@@ -1,18 +1,19 @@
 import 'package:alive_app/components/login/login.dart';
-import 'package:alive_app/components/student_section/modules/academics/academics.dart';
-import 'package:alive_app/components/student_section/modules/ai_tutor/ai.dart';
-import 'package:alive_app/components/student_section/modules/assignment/assignment.dart';
-import 'package:alive_app/components/student_section/modules/discussions/explore.dart';
-import 'package:alive_app/components/student_section/modules/discussions/my_discussions.dart';
-import 'package:alive_app/components/student_section/modules/exam/exams.dart';
-import 'package:alive_app/components/student_section/modules/exam/scores.dart';
-import 'package:alive_app/components/student_section/modules/faqs/faqs.dart';
-import 'package:alive_app/components/student_section/modules/resume/resume.dart';
-import 'package:alive_app/components/student_section/modules/homepage/std_home.dart';
-import 'package:alive_app/components/student_section/modules/study_material/study_material.dart';
-import 'package:alive_app/components/student_section/modules/subjects/subjects.dart';
-import 'package:alive_app/components/student_section/custom_app_bar.dart';
+
 import 'package:flutter/material.dart';
+import 'custom_app_bar.dart';
+import 'modules/academics/academics.dart';
+import 'modules/ai_tutor/ai.dart';
+import 'modules/assignment/assignment.dart';
+import 'modules/discussions/explore.dart';
+import 'modules/discussions/my_discussions.dart';
+import 'modules/exam/exams.dart';
+import 'modules/exam/scores.dart';
+import 'modules/faqs/faqs.dart';
+import 'modules/homepage/std_home.dart';
+import 'modules/resume/resume.dart';
+import 'modules/study_material/study_material.dart';
+import 'modules/subjects/subjects.dart';
 
 class Student extends StatefulWidget {
   final String token;
