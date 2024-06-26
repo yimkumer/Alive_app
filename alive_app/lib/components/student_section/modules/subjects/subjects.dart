@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
@@ -257,10 +256,9 @@ class _SubjectsState extends State<Subjects> {
                     future: dataFuture,
                     builder: (context, snapshot) {
                       if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Text('Loading...');
+                        return const Center(child: Text('Loading...'));
                       } else if (snapshot.hasError) {
-                        return Text(
-                            'Error: ${snapshot.error}\nStack trace: ${snapshot.stackTrace}');
+                        return Text('Error: ${snapshot.error}');
                       } else {
                         var subjects = snapshot.data!
                             .where((subject) =>
@@ -284,8 +282,25 @@ class _SubjectsState extends State<Subjects> {
 
                             return filteredSubjects.isEmpty
                                 ? Center(
-                                    child: Text(
-                                        'No subject matches the search text: $searchText'))
+                                    child: RichText(
+                                      text: TextSpan(
+                                        style:
+                                            DefaultTextStyle.of(context).style,
+                                        children: <TextSpan>[
+                                          const TextSpan(
+                                              text:
+                                                  'No subject matches the search text: ',
+                                              style: TextStyle(
+                                                  fontWeight: FontWeight.bold)),
+                                          TextSpan(
+                                              text: searchText,
+                                              style: const TextStyle(
+                                                  fontWeight: FontWeight.bold,
+                                                  fontStyle: FontStyle.italic)),
+                                        ],
+                                      ),
+                                    ),
+                                  )
                                 : ListView.builder(
                                     itemCount: filteredSubjects.length,
                                     itemBuilder: (context, index) {

@@ -212,13 +212,13 @@ class _CalendarState extends State<Calendar> {
                                               classInfo.subjectNameShort,
                                               style: TextStyle(
                                                 fontSize: 15.0,
-                                                color: day.isBefore(
-                                                        DateTime.now())
-                                                    ? const Color(0xFF868686)
-                                                    : isFuture
-                                                        ? const Color(
-                                                            0xFFFF6714)
-                                                        : Colors.black,
+                                                color:
+                                                    day.isBefore(DateTime.now())
+                                                        ? Colors.white
+                                                        : isFuture
+                                                            ? const Color(
+                                                                0xFFFF6714)
+                                                            : Colors.black,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                               overflow: TextOverflow.clip,
@@ -227,13 +227,13 @@ class _CalendarState extends State<Calendar> {
                                               classInfo.interval,
                                               style: TextStyle(
                                                 fontSize: 10.0,
-                                                color: day.isBefore(
-                                                        DateTime.now())
-                                                    ? const Color(0xFF868686)
-                                                    : isFuture
-                                                        ? const Color(
-                                                            0xFFFF6714)
-                                                        : Colors.black,
+                                                color:
+                                                    day.isBefore(DateTime.now())
+                                                        ? Colors.white
+                                                        : isFuture
+                                                            ? const Color(
+                                                                0xFFFF6714)
+                                                            : Colors.black,
                                                 fontWeight: FontWeight.w500,
                                               ),
                                               overflow: TextOverflow.clip,

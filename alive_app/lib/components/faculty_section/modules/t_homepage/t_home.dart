@@ -1,4 +1,5 @@
 import 'package:alive_app/components/faculty_section/modules/t_homepage/t_calendar.dart';
+import 'package:alive_app/components/faculty_section/modules/t_homepage/t_semsubjects.dart';
 import 'package:flutter/material.dart';
 
 import 't_profile_section.dart';
@@ -13,7 +14,11 @@ class THome extends StatelessWidget {
     return Scaffold(
       body: SingleChildScrollView(
         child: Column(
-          children: [const TProfileSection(), TCalendar(token: token)],
+          children: [
+            const TProfileSection(),
+            TCalendar(token: token),
+            TSemsubjects(token: token)
+          ],
         ),
       ),
     );

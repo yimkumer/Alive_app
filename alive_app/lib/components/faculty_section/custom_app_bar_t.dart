@@ -151,7 +151,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       child: const CircleAvatar(
         backgroundColor: Colors.grey,
         child: Text(
-          'Y',
+          'S',
           style: TextStyle(color: Colors.white),
         ),
       ),
