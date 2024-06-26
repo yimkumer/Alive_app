@@ -1,2 +1,3 @@
-# Alive_app
- 
+# alive_app
+
+A new Flutter project.
