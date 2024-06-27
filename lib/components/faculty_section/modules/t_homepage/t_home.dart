@@ -1,4 +1,5 @@
 import 'package:alive_app/components/faculty_section/modules/t_homepage/t_calendar.dart';
+import 'package:alive_app/components/faculty_section/modules/t_homepage/t_discussions.dart';
 import 'package:alive_app/components/faculty_section/modules/t_homepage/t_semsubjects.dart';
 import 'package:flutter/material.dart';
 
@@ -17,7 +18,8 @@ class THome extends StatelessWidget {
           children: [
             const TProfileSection(),
             TCalendar(token: token),
-            TSemsubjects(token: token)
+            TSemsubjects(token: token),
+            const TDiscussions(),
           ],
         ),
       ),

@@ -196,7 +196,7 @@ class _TCalendarState extends State<TCalendar> {
                                         decoration: BoxDecoration(
                                           color: isToday
                                               ? const Color(0xFF8800C9)
-                                              : const Color(0xffF5EFF9),
+                                              : const Color(0xffF0F0F0),
                                           border: Border.all(
                                             color: const Color(0xFFDADADA),
                                             width: 1.0,
@@ -212,8 +212,9 @@ class _TCalendarState extends State<TCalendar> {
                                               classInfo.subjectNameShort,
                                               style: TextStyle(
                                                 fontSize: 15.0,
-                                                color:
-                                                    day.isBefore(DateTime.now())
+                                                color: day.isBefore(today)
+                                                    ? const Color(0xFF868686)
+                                                    : isToday
                                                         ? Colors.white
                                                         : isFuture
                                                             ? const Color(
@@ -227,8 +228,9 @@ class _TCalendarState extends State<TCalendar> {
                                               classInfo.interval,
                                               style: TextStyle(
                                                 fontSize: 10.0,
-                                                color:
-                                                    day.isBefore(DateTime.now())
+                                                color: day.isBefore(today)
+                                                    ? const Color(0xFF868686)
+                                                    : isToday
                                                         ? Colors.white
                                                         : isFuture
                                                             ? const Color(

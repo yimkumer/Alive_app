@@ -1,3 +1,4 @@
+import 'package:alive_app/components/student_section/modules/homepage/discussions.dart';
 import 'package:flutter/material.dart';
 import 'calendar.dart';
 import 'leaderboard.dart';
@@ -21,6 +22,7 @@ class std_home extends StatelessWidget {
             const Leaderboard(),
             Calendar(token: token),
             Semsubjects(token: token),
+            const Discussions(),
           ],
         ),
       ),
