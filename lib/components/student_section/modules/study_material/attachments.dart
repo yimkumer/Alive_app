@@ -31,11 +31,12 @@ class _AttachmentsState extends State<Attachments> {
   Color listViewIconColor = Colors.grey;
   List<Map<String, dynamic>> attachments = [];
   late Future<Map<String, dynamic>> studyMaterialFuture;
+  TextEditingController searchController = TextEditingController();
+  String searchQuery = '';
 
   @override
   void initState() {
     super.initState();
-    print(widget.materialId);
     studyMaterialFuture = fetchStudyMaterial();
     fetchAttachments().then((fetchedAttachments) {
       setState(() {
@@ -76,13 +77,6 @@ class _AttachmentsState extends State<Attachments> {
       if (selectedItems[i]) {
         selectedUrls.add(attachments[i]['url']);
       }
-    }
-
-    if (selectedUrls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No items selected for download')),
-      );
-      return;
     }
 
     final directoryPath = await FilePicker.platform.getDirectoryPath();
@@ -234,6 +228,17 @@ class _AttachmentsState extends State<Attachments> {
     zipFile.writeAsBytesSync(zipEncoder.encode(archive)!);
   }
 
+  List<Map<String, dynamic>> get filteredAttachments {
+    if (searchQuery.trim().isEmpty) {
+      return attachments;
+    }
+    return attachments
+        .where((attachment) => attachment['title']
+            .toLowerCase()
+            .contains(searchQuery.toLowerCase().trim()))
+        .toList();
+  }
+
   @override
   Widget build(BuildContext context) {
     var tagColors = [
@@ -248,169 +253,193 @@ class _AttachmentsState extends State<Attachments> {
 
     var screenSize = MediaQuery.of(context).size;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("Study Materials"),
-      ),
-      body: FutureBuilder<Map<String, dynamic>>(
-        future: studyMaterialFuture,
-        builder: (BuildContext context,
-            AsyncSnapshot<Map<String, dynamic>> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (snapshot.hasError) {
-            print('Error: ${snapshot.error}');
-            return Center(child: Text('Error: ${snapshot.error}'));
-          } else if (snapshot.hasData) {
-            var studyMaterialName = snapshot.data?['name'];
-            List<String> studyMaterialTags =
-                snapshot.data?['tags'] as List<String>;
-            return Padding(
-              padding: const EdgeInsets.all(5.0),
-              child: Card(
-                elevation: 8.0,
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: <Widget>[
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.start,
-                          children: <Widget>[
-                            Expanded(
-                              child: Text(
-                                studyMaterialName ?? 'Default Name',
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: 18.0,
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text("Study Materials"),
+        ),
+        body: FutureBuilder<Map<String, dynamic>>(
+          future: studyMaterialFuture,
+          builder: (BuildContext context,
+              AsyncSnapshot<Map<String, dynamic>> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            } else if (snapshot.hasError) {
+              print('Error: ${snapshot.error}');
+              return Center(child: Text('Error: ${snapshot.error}'));
+            } else if (snapshot.hasData) {
+              var studyMaterialName = snapshot.data?['name'];
+              List<String> studyMaterialTags =
+                  snapshot.data?['tags'] as List<String>;
+              return Padding(
+                padding: const EdgeInsets.all(5.0),
+                child: Card(
+                  elevation: 8.0,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  studyMaterialName ?? 'Default Name',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 18.0,
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Wrap(
-                        alignment: WrapAlignment.start,
-                        children: studyMaterialTags.map<Widget>((tag) {
-                          var color = tagColors[studyMaterialTags.indexOf(tag) %
-                              tagColors.length];
-                          return Container(
-                            margin: const EdgeInsets.all(4.0),
-                            padding: const EdgeInsets.all(4.0),
-                            decoration: BoxDecoration(
-                              color: color['background'],
-                              borderRadius: BorderRadius.circular(4.0),
-                            ),
-                            child: Text(
-                              tag,
-                              style: TextStyle(
-                                color: color['text'],
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                      const Padding(
-                        padding: EdgeInsets.all(8.0),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            hintText: 'Search attachments',
-                            prefixIcon: Icon(Icons.search),
-                            border: OutlineInputBorder(),
+                            ],
                           ),
                         ),
-                      ),
-                      Container(
-                        padding:
-                            EdgeInsets.only(right: screenSize.width * 0.03),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.end,
-                          children: <Widget>[
-                            IconButton(
-                              icon: const Icon(Icons.download_outlined),
-                              onPressed: () async {
-                                List<String> urls =
-                                    await fetchDownloadLink(widget.materialId);
-                                final directoryPath = await FilePicker.platform
-                                    .getDirectoryPath();
-                                if (directoryPath == null) {
-                                  return;
-                                }
-
-                                final dir = Directory(directoryPath);
-                                if (!dir.existsSync()) {
-                                  dir.createSync(recursive: true);
-                                }
-
-                                await downloadMultipleFiles(
-                                    urls, directoryPath, studyMaterialName);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Download completed!'),
-                                  ),
-                                );
-                              },
-                            ),
-                            Container(
+                        Wrap(
+                          alignment: WrapAlignment.start,
+                          children: studyMaterialTags.map<Widget>((tag) {
+                            var color = tagColors[
+                                studyMaterialTags.indexOf(tag) %
+                                    tagColors.length];
+                            return Container(
+                              margin: const EdgeInsets.all(4.0),
+                              padding: const EdgeInsets.all(4.0),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFEFF6FF),
-                                border:
-                                    Border.all(color: const Color(0xFFD9D9D9)),
-                                borderRadius:
-                                    const BorderRadius.all(Radius.circular(30)),
+                                color: color['background'],
+                                borderRadius: BorderRadius.circular(4.0),
                               ),
-                              child: Row(
-                                children: [
-                                  IconButton(
-                                    icon: Icon(Icons.view_list,
-                                        color: listViewIconColor),
-                                    onPressed: () {
-                                      if (!isGridView) return;
-                                      toggleViewMode();
-                                    },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.view_module,
-                                        color: gridViewIconColor),
-                                    onPressed: () {
-                                      if (isGridView) return;
-                                      toggleViewMode();
-                                    },
-                                  ),
-                                ],
+                              child: Text(
+                                tag,
+                                style: TextStyle(
+                                  color: color['text'],
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                          ],
+                            );
+                          }).toList(),
                         ),
-                      ),
-                      const Divider(),
-                      SizedBox(
-                        height: screenSize.height * 0.7,
-                        child: Column(
-                          children: <Widget>[
-                            SelectionCountDisplay(
-                              selectedItems: selectedItems,
-                              onClear: deselectAllItems,
-                              onDownload: downloadSelectedItems,
+                        Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: TextField(
+                            controller: searchController,
+                            decoration: InputDecoration(
+                              hintText: 'Search attachments',
+                              prefixIcon: const Icon(Icons.search),
+                              border: const OutlineInputBorder(),
+                              suffixIcon: searchQuery.isNotEmpty
+                                  ? IconButton(
+                                      icon: const Icon(Icons.clear),
+                                      onPressed: () {
+                                        setState(() {
+                                          searchQuery = '';
+                                          searchController.clear();
+                                        });
+                                      },
+                                    )
+                                  : null,
                             ),
-                            Expanded(
-                              child: isGridView
-                                  ? buildGridView()
-                                  : buildListView(),
-                            ),
-                          ],
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value;
+                              });
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                        Container(
+                          padding:
+                              EdgeInsets.only(right: screenSize.width * 0.03),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: <Widget>[
+                              IconButton(
+                                icon: const Icon(Icons.download_outlined),
+                                onPressed: () async {
+                                  List<String> urls = await fetchDownloadLink(
+                                      widget.materialId);
+                                  final directoryPath = await FilePicker
+                                      .platform
+                                      .getDirectoryPath();
+                                  if (directoryPath == null) {
+                                    return;
+                                  }
+
+                                  final dir = Directory(directoryPath);
+                                  if (!dir.existsSync()) {
+                                    dir.createSync(recursive: true);
+                                  }
+
+                                  await downloadMultipleFiles(
+                                      urls, directoryPath, studyMaterialName);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Download completed!'),
+                                    ),
+                                  );
+                                },
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFEFF6FF),
+                                  border: Border.all(
+                                      color: const Color(0xFFD9D9D9)),
+                                  borderRadius: const BorderRadius.all(
+                                      Radius.circular(30)),
+                                ),
+                                child: Row(
+                                  children: [
+                                    IconButton(
+                                      icon: Icon(Icons.view_list,
+                                          color: listViewIconColor),
+                                      onPressed: () {
+                                        if (!isGridView) return;
+                                        toggleViewMode();
+                                      },
+                                    ),
+                                    IconButton(
+                                      icon: Icon(Icons.view_module,
+                                          color: gridViewIconColor),
+                                      onPressed: () {
+                                        if (isGridView) return;
+                                        toggleViewMode();
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(),
+                        SizedBox(
+                          height: screenSize.height * 0.7,
+                          child: Column(
+                            children: <Widget>[
+                              SelectionCountDisplay(
+                                selectedItems: selectedItems,
+                                onClear: deselectAllItems,
+                                onDownload: downloadSelectedItems,
+                              ),
+                              Expanded(
+                                child: isGridView
+                                    ? buildGridView()
+                                    : buildListView(),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            );
-          } else {
-            return const Center(child: Text('No data'));
-          }
-        },
+              );
+            } else {
+              return const Center(child: Text('No data'));
+            }
+          },
+        ),
       ),
     );
   }
@@ -421,9 +450,9 @@ class _AttachmentsState extends State<Attachments> {
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 1,
       ),
-      itemCount: attachments.length,
+      itemCount: filteredAttachments.length,
       itemBuilder: (context, index) {
-        var attachment = attachments[index];
+        var attachment = filteredAttachments[index];
         var url = attachment['url'];
         var title = attachment['title'];
         var date = attachment['published_date'];
@@ -438,7 +467,6 @@ class _AttachmentsState extends State<Attachments> {
             assetName = 'assets/ppt.svg';
             break;
           case 'doc':
-          case 'doc':
           case 'docx':
             assetName = 'assets/word.svg';
             break;
@@ -448,15 +476,30 @@ class _AttachmentsState extends State<Attachments> {
         return GridTile(
           child: CheckboxListTile(
             controlAffinity: ListTileControlAffinity.leading,
-            value: selectedItems[index],
-            onChanged: (bool? value) => selectItem(index, value),
+            value: selectedItems[attachments.indexOf(attachment)],
+            onChanged: (bool? value) =>
+                selectItem(attachments.indexOf(attachment), value),
             title: SvgPicture.asset(
               assetName,
               width: screenSize.width * 0.1,
               height: screenSize.height * 0.1,
               placeholderBuilder: (BuildContext context) => Container(),
             ),
-            subtitle: Text('$title\n$date'),
+            subtitle: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '$title\n',
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, color: Colors.black),
+                  ),
+                  TextSpan(
+                    text: '$date',
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
@@ -466,9 +509,9 @@ class _AttachmentsState extends State<Attachments> {
   Widget buildListView() {
     var screenSize = MediaQuery.of(context).size;
     return ListView.builder(
-      itemCount: attachments.length,
+      itemCount: filteredAttachments.length,
       itemBuilder: (context, index) {
-        var attachment = attachments[index];
+        var attachment = filteredAttachments[index];
         var url = attachment['url'];
         var title = attachment['title'];
         var extension = url.split('.').last;
@@ -490,8 +533,9 @@ class _AttachmentsState extends State<Attachments> {
         }
         return CheckboxListTile(
           controlAffinity: ListTileControlAffinity.leading,
-          value: selectedItems[index],
-          onChanged: (bool? value) => selectItem(index, value),
+          value: selectedItems[attachments.indexOf(attachment)],
+          onChanged: (bool? value) =>
+              selectItem(attachments.indexOf(attachment), value),
           title: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
