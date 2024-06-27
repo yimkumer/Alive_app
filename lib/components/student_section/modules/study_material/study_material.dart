@@ -40,179 +40,6 @@ class StudyMaterialData {
   }
 }
 
-class _Row {
-  _Row(
-    this.studyMaterialName,
-    this.studyMaterialCreatedBy,
-    this.subjectCode,
-    this.subjectname,
-    this.material_id,
-  );
-
-  final String studyMaterialName;
-  final String studyMaterialCreatedBy;
-  final String subjectCode;
-  final String subjectname;
-  final int material_id;
-}
-
-class _DataSource extends DataTableSource {
-  _DataSource(this.context, this.data, this.getDownloadLink, this.token) {
-    _rows = <_Row>[
-      for (var item in data)
-        _Row(
-          item.studyMaterialName ?? 'N/A',
-          item.studyMaterialCreatedBy ?? 'N/A',
-          item.subjectCode ?? 'N/A',
-          item.subjectname ?? 'N/A',
-          item.material_id ?? 0,
-        ),
-    ];
-  }
-
-  final BuildContext context;
-  final List<dynamic> data;
-  final DownloadLinkGetter getDownloadLink;
-  final String token;
-  List<_Row> _rows = [];
-
-  @override
-  DataRow getRow(
-    int index,
-  ) {
-    assert(index >= 0);
-    if (index >= _rows.length) {
-      return const DataRow(cells: []);
-    }
-    final _Row row = _rows[index];
-    return DataRow.byIndex(
-      index: index,
-      cells: <DataCell>[
-        DataCell(
-          GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Attachments(
-                      key: ValueKey(row.material_id),
-                      materialId: row.material_id,
-                      token: token),
-                ),
-              );
-            },
-            child: Row(
-              children: <Widget>[
-                SvgPicture.asset('assets/book_icon.svg', height: 25, width: 25),
-                const SizedBox(width: 8),
-                Text(row.studyMaterialName),
-              ],
-            ),
-          ),
-        ),
-        DataCell(GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Attachments(
-                      key: ValueKey(row.material_id),
-                      materialId: row.material_id,
-                      token: token),
-                ),
-              );
-            },
-            child: Text(row.studyMaterialCreatedBy))),
-        DataCell(GestureDetector(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => Attachments(
-                      key: ValueKey(row.material_id),
-                      materialId: row.material_id,
-                      token: token),
-                ),
-              );
-            },
-            child: Text('${row.subjectname} - ${row.material_id}'))),
-        DataCell(
-          const Icon(Icons.download_rounded),
-          onTap: () async {
-            final materialId = row.material_id;
-            String url = await getDownloadLink(materialId);
-            List<String> urls = url.split(', ');
-            final directoryPath = await FilePicker.platform.getDirectoryPath();
-            if (directoryPath == null) {
-              return;
-            }
-            await downloadMultipleFiles(
-                urls, directoryPath, row.studyMaterialName);
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Download completed!'),
-              ),
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  @override
-  bool get isRowCountApproximate => false;
-
-  @override
-  int get rowCount => _rows.length;
-
-  @override
-  int get selectedRowCount => 0;
-}
-
-// This function is to download Single url file
-Future<File> downloadSingleFile(String url, String directoryPath) async {
-  final response = await http.get(Uri.parse(url));
-  var fileBytes = response.bodyBytes;
-  String fileName = p.basename(Uri.parse(url).path);
-  final filePath = '$directoryPath/$fileName';
-  final file = File(filePath);
-  try {
-    await file.writeAsBytes(fileBytes);
-    return file;
-  } catch (e) {
-    print('Could not save the file $filePath. Error: $e');
-    rethrow;
-  }
-}
-
-// This function is to download Multiple url files
-Future<void> downloadMultipleFiles(
-    List<String> urls, String directoryPath, String studyMaterialName) async {
-  List<File> files = [];
-  for (var url in urls) {
-    try {
-      var file = await downloadSingleFile(url, directoryPath);
-      files.add(file);
-    } catch (e) {
-      print('Could not download the file from $url. Error: $e');
-    }
-  }
-
-  final archive = Archive();
-
-  for (var file in files) {
-    final bytes = file.readAsBytesSync();
-    final fileName = p.basename(file.path);
-    archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
-
-    file.deleteSync();
-  }
-
-  final zipEncoder = ZipEncoder();
-  final zipFile = File('$directoryPath/$studyMaterialName.zip');
-  zipFile.writeAsBytesSync(zipEncoder.encode(archive)!);
-}
-
 class StudyMaterial extends StatefulWidget {
   final String token;
 
@@ -237,17 +64,41 @@ class _StudyMaterialState extends State<StudyMaterial> {
   };
 
   String? dropdownValue;
-  String? searchText;
   Future<List<StudyMaterialData>>? dataFuture;
   String? instituteId;
   String? fetchedInstituteId;
   int _rowsPerPage = PaginatedDataTable.defaultRowsPerPage;
-
   final searchTextController = TextEditingController();
+  String searchQuery = '';
+  List<StudyMaterialData> allMaterials = [];
 
   @override
   void initState() {
     super.initState();
+    preloadData();
+  }
+
+  Future<void> preloadData() async {
+    var headers = {
+      'Authorization': 'Bearer ${widget.token}',
+    };
+    var request = http.Request(
+        'GET',
+        Uri.parse(
+            'https://studymaterial-api.alive.university/api/study-material'));
+    request.headers.addAll(headers);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      String responseBody = await response.stream.bytesToString();
+      Map<String, dynamic> jsonResponse = json.decode(responseBody);
+      List materials = jsonResponse['data']['materials'] ?? [];
+      setState(() {
+        allMaterials =
+            materials.map((item) => StudyMaterialData.fromJson(item)).toList();
+      });
+    } else {
+      print(response.reasonPhrase);
+    }
   }
 
   void onQueryParameterSelected(String selectedInstituteId) {
@@ -264,22 +115,28 @@ class _StudyMaterialState extends State<StudyMaterial> {
     });
   }
 
-  //Search function
-  void search(String query) {
-    print('Performing search with query: $query');
-    setState(() {
-      searchText = query;
-      if (query.isEmpty) {
-        dataFuture = fetchData(dropdownValue);
-      }
-    });
+  List<StudyMaterialData> filterStudyMaterials(
+      List<StudyMaterialData> materials) {
+    if (searchQuery.isEmpty) {
+      return materials;
+    }
+    return materials.where((material) {
+      return material.studyMaterialName
+              .toLowerCase()
+              .contains(searchQuery.toLowerCase()) ||
+          material.subjectCode
+              .toLowerCase()
+              .contains(searchQuery.toLowerCase());
+    }).toList();
   }
 
-  //FOR getting the study materials
   Future<List<StudyMaterialData>> fetchData(String? instituteId) async {
+    if (instituteId == null) {
+      return allMaterials;
+    }
     var headers = {'Authorization': 'Bearer ${widget.token}'};
     var queryParameters = {
-      if (instituteId != null) 'institute': instituteId,
+      'institute': instituteId,
     };
     var uri = Uri.https(
       'studymaterial-api.alive.university',
@@ -297,7 +154,6 @@ class _StudyMaterialState extends State<StudyMaterial> {
     }
   }
 
-  //FOR getting the download link according to the study_material_id
   Future<String> getDownloadLink(int materialId) async {
     var headers = {'Authorization': 'Bearer ${widget.token}'};
     var request = http.Request(
@@ -431,11 +287,19 @@ class _StudyMaterialState extends State<StudyMaterial> {
                               ),
                               child: TextField(
                                 controller: searchTextController,
-                                onChanged: (String value) {
-                                  search(value);
+                                onChanged: (value) {
+                                  setState(() {
+                                    searchQuery = value;
+                                    if (value.isNotEmpty) {
+                                      dataFuture = Future.value(
+                                          filterStudyMaterials(allMaterials));
+                                    } else {
+                                      dataFuture = null;
+                                    }
+                                  });
                                 },
                                 decoration: const InputDecoration(
-                                  hintText: 'Search by subjects...',
+                                  hintText: 'Search by subject name or code...',
                                   border: InputBorder.none,
                                   icon: Icon(Icons.search),
                                 ),
@@ -447,14 +311,12 @@ class _StudyMaterialState extends State<StudyMaterial> {
                     ),
                   ],
                 ),
-
-                //Displaying the Study materials
                 Expanded(
                   child: FutureBuilder<List<StudyMaterialData>>(
                     future: dataFuture,
                     builder: (BuildContext context,
                         AsyncSnapshot<List<StudyMaterialData>> snapshot) {
-                      if (dataFuture == null) {
+                      if (dataFuture == null && searchQuery.isEmpty) {
                         return SingleChildScrollView(
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
@@ -505,7 +367,9 @@ class _StudyMaterialState extends State<StudyMaterial> {
                       } else if (snapshot.hasData) {
                         List<StudyMaterialData> data =
                             snapshot.data as List<StudyMaterialData>;
-                        if (data.isEmpty) {
+                        List<StudyMaterialData> filteredData =
+                            filterStudyMaterials(data);
+                        if (filteredData.isEmpty) {
                           return SingleChildScrollView(
                             child: Column(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -516,10 +380,12 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                   height: 200,
                                 ),
                                 const SizedBox(height: 10.0),
-                                const Text(
-                                  "Selected institute doesn't seem to have any study materials",
+                                Text(
+                                  searchQuery.isEmpty
+                                      ? "Selected institute doesn't seem to have any study materials"
+                                      : "No matching study materials found",
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Color(0xFF656565),
                                     fontWeight: FontWeight.w500,
                                   ),
@@ -542,6 +408,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                     setState(() {
                                       dataFuture = null;
                                       searchTextController.clear();
+                                      searchQuery = '';
                                       instituteId = null;
                                     });
                                   },
@@ -604,7 +471,7 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                   ),
                                 ),
                               ],
-                              source: _DataSource(context, snapshot.data ?? [],
+                              source: _DataSource(context, filteredData,
                                   getDownloadLink, widget.token),
                             ),
                           );
@@ -621,5 +488,147 @@ class _StudyMaterialState extends State<StudyMaterial> {
         ),
       ),
     );
+  }
+}
+
+class _DataSource extends DataTableSource {
+  _DataSource(this.context, this.data, this.getDownloadLink, this.token);
+
+  final BuildContext context;
+  final List<StudyMaterialData> data;
+  final DownloadLinkGetter getDownloadLink;
+  final String token;
+
+  @override
+  DataRow getRow(int index) {
+    assert(index >= 0);
+    if (index >= data.length) return const DataRow(cells: [DataCell(Text(''))]);
+    final row = data[index];
+    return DataRow.byIndex(
+      index: index,
+      cells: <DataCell>[
+        DataCell(
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Attachments(
+                      key: ValueKey(row.material_id),
+                      materialId: row.material_id,
+                      token: token),
+                ),
+              );
+            },
+            child: Row(
+              children: <Widget>[
+                SvgPicture.asset('assets/book_icon.svg', height: 25, width: 25),
+                const SizedBox(width: 8),
+                Expanded(
+                    child: Text(row.studyMaterialName,
+                        overflow: TextOverflow.ellipsis)),
+              ],
+            ),
+          ),
+        ),
+        DataCell(GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Attachments(
+                      key: ValueKey(row.material_id),
+                      materialId: row.material_id,
+                      token: token),
+                ),
+              );
+            },
+            child: Text(row.studyMaterialCreatedBy,
+                overflow: TextOverflow.ellipsis))),
+        DataCell(GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => Attachments(
+                      key: ValueKey(row.material_id),
+                      materialId: row.material_id,
+                      token: token),
+                ),
+              );
+            },
+            child: Text('${row.subjectCode} - ${row.subjectname}',
+                overflow: TextOverflow.ellipsis))),
+        DataCell(
+          const Icon(Icons.download_rounded),
+          onTap: () async {
+            String url = await getDownloadLink(row.material_id);
+            List<String> urls = url.split(', ');
+            final directoryPath = await FilePicker.platform.getDirectoryPath();
+            if (directoryPath == null) {
+              return;
+            }
+            await downloadMultipleFiles(
+                urls, directoryPath, row.studyMaterialName);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Download completed!'),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  @override
+  int get rowCount => data.length;
+
+  @override
+  bool get isRowCountApproximate => false;
+
+  @override
+  int get selectedRowCount => 0;
+}
+
+Future<void> downloadMultipleFiles(
+    List<String> urls, String directoryPath, String studyMaterialName) async {
+  List<File> files = [];
+  for (var url in urls) {
+    try {
+      var file = await downloadSingleFile(url, directoryPath);
+      files.add(file);
+    } catch (e) {
+      print('Could not download the file from $url. Error: $e');
+    }
+  }
+
+  final archive = Archive();
+
+  for (var file in files) {
+    final bytes = file.readAsBytesSync();
+    final fileName = p.basename(file.path);
+    archive.addFile(ArchiveFile(fileName, bytes.length, bytes));
+
+    file.deleteSync();
+  }
+
+  final zipEncoder = ZipEncoder();
+  final zipFile = File('$directoryPath/$studyMaterialName.zip');
+  zipFile.writeAsBytesSync(zipEncoder.encode(archive)!);
+}
+
+Future<File> downloadSingleFile(String url, String directoryPath) async {
+  final response = await http.get(Uri.parse(url));
+  var fileBytes = response.bodyBytes;
+  String fileName = p.basename(Uri.parse(url).path);
+  final filePath = '$directoryPath/$fileName';
+  final file = File(filePath);
+  try {
+    await file.writeAsBytes(fileBytes);
+    return file;
+  } catch (e) {
+    print('Could not save the file $filePath. Error: $e');
+    rethrow;
   }
 }
