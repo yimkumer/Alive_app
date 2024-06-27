@@ -29,10 +29,20 @@ class _AttachmentsState extends State<Attachments> {
   List<bool> selectedItems = [];
   Color gridViewIconColor = Colors.blue;
   Color listViewIconColor = Colors.grey;
+  List<Map<String, dynamic>> attachments = [];
+  late Future<Map<String, dynamic>> studyMaterialFuture;
 
   @override
   void initState() {
     super.initState();
+    print(widget.materialId);
+    studyMaterialFuture = fetchStudyMaterial();
+    fetchAttachments().then((fetchedAttachments) {
+      setState(() {
+        attachments = fetchedAttachments;
+        selectedItems = List<bool>.filled(attachments.length, false);
+      });
+    });
   }
 
   void toggleViewMode() {
@@ -48,9 +58,9 @@ class _AttachmentsState extends State<Attachments> {
     });
   }
 
-  void selectItem(int index) {
+  void selectItem(int index, bool? value) {
     setState(() {
-      selectedItems[index] = !selectedItems[index];
+      selectedItems[index] = value ?? false;
     });
   }
 
@@ -60,11 +70,34 @@ class _AttachmentsState extends State<Attachments> {
     });
   }
 
-  void downloadSelectedItems() {
-    // Add your download functionality here
+  Future<void> downloadSelectedItems() async {
+    List<String> selectedUrls = [];
+    for (int i = 0; i < attachments.length; i++) {
+      if (selectedItems[i]) {
+        selectedUrls.add(attachments[i]['url']);
+      }
+    }
+
+    if (selectedUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No items selected for download')),
+      );
+      return;
+    }
+
+    final directoryPath = await FilePicker.platform.getDirectoryPath();
+    if (directoryPath == null) {
+      return;
+    }
+
+    final studyMaterialName =
+        await fetchStudyMaterial().then((data) => data['name']);
+    await downloadMultipleFiles(selectedUrls, directoryPath, studyMaterialName);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Download completed!')),
+    );
   }
 
-  //fetching the download links acc to material id
   Future<List<String>> fetchDownloadLink(int materialId) async {
     var headers = {
       'Authorization': 'Bearer ${widget.token}',
@@ -87,7 +120,6 @@ class _AttachmentsState extends State<Attachments> {
     }
   }
 
-  //TO fetch the study material name and tags
   Future<Map<String, dynamic>> fetchStudyMaterial() async {
     var headers = {
       'Authorization': 'Bearer ${widget.token}',
@@ -116,7 +148,6 @@ class _AttachmentsState extends State<Attachments> {
     }
   }
 
-  //TO fetch the study material attachments
   Future<List<Map<String, dynamic>>> fetchAttachments() async {
     var headers = {
       'Authorization': 'Bearer ${widget.token}',
@@ -136,7 +167,6 @@ class _AttachmentsState extends State<Attachments> {
       var data = responseJson['data'];
       var attachments = data
           .map((item) {
-            // Parse and format the date
             DateTime parsedDate =
                 DateTime.parse(item['study_material_attachment_published_date'])
                     .toLocal();
@@ -157,7 +187,6 @@ class _AttachmentsState extends State<Attachments> {
     }
   }
 
-  // This function is to download Single url file
   Future<File> downloadSingleFile(String url, String directoryPath) async {
     final response = await http.get(Uri.parse(url));
     var fileBytes = response.bodyBytes;
@@ -224,7 +253,7 @@ class _AttachmentsState extends State<Attachments> {
         title: const Text("Study Materials"),
       ),
       body: FutureBuilder<Map<String, dynamic>>(
-        future: fetchStudyMaterial(),
+        future: studyMaterialFuture,
         builder: (BuildContext context,
             AsyncSnapshot<Map<String, dynamic>> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -243,7 +272,6 @@ class _AttachmentsState extends State<Attachments> {
                 child: SingleChildScrollView(
                   child: Column(
                     children: <Widget>[
-                      //HEADER SECTION
                       Padding(
                         padding: const EdgeInsets.all(8.0),
                         child: Row(
@@ -261,8 +289,6 @@ class _AttachmentsState extends State<Attachments> {
                           ],
                         ),
                       ),
-
-                      //TAGS SECTION
                       Wrap(
                         alignment: WrapAlignment.start,
                         children: studyMaterialTags.map<Widget>((tag) {
@@ -312,7 +338,6 @@ class _AttachmentsState extends State<Attachments> {
                                   return;
                                 }
 
-                                // Create the directory if it does not exist
                                 final dir = Directory(directoryPath);
                                 if (!dir.existsSync()) {
                                   dir.createSync(recursive: true);
@@ -359,69 +384,23 @@ class _AttachmentsState extends State<Attachments> {
                           ],
                         ),
                       ),
-
-                      //Dividing the sections
                       const Divider(),
-
-                      //ATTACHMENTS SECTION
-                      FutureBuilder<List<Map<String, dynamic>>>(
-                        future: fetchAttachments(),
-                        builder: (BuildContext context,
-                            AsyncSnapshot<List<Map<String, dynamic>>>
-                                snapshot) {
-                          if (snapshot.connectionState ==
-                              ConnectionState.waiting) {
-                            return Container();
-                          } else if (snapshot.hasError) {
-                            print('Error: ${snapshot.error}');
-                            return Text('Error: ${snapshot.error}');
-                          } else {
-                            var attachments = snapshot.data;
-                            if (selectedItems.isEmpty) {
-                              selectedItems =
-                                  List<bool>.filled(attachments!.length, false);
-                            }
-                            return SizedBox(
-                              height: screenSize.height * 0.7,
-                              child: Column(
-                                children: <Widget>[
-                                  if (selectedItems.any((selected) => selected))
-                                    Container(
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFEFF6FF),
-                                        border: Border.all(
-                                            color: const Color(0xFFD9D9D9)),
-                                        borderRadius: const BorderRadius.all(
-                                            Radius.circular(1)),
-                                      ),
-                                      child: Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.center,
-                                        children: <Widget>[
-                                          IconButton(
-                                            icon: const Icon(Icons.clear),
-                                            onPressed: deselectAllItems,
-                                          ),
-                                          Text(
-                                              '${selectedItems.where((selected) => selected).length} Attachments selected'),
-                                          IconButton(
-                                            icon: const Icon(
-                                                Icons.download_outlined),
-                                            onPressed: downloadSelectedItems,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  isGridView
-                                      ? Expanded(
-                                          child: buildGridView(attachments!))
-                                      : Expanded(
-                                          child: buildListView(attachments!)),
-                                ],
-                              ),
-                            );
-                          }
-                        },
+                      SizedBox(
+                        height: screenSize.height * 0.7,
+                        child: Column(
+                          children: <Widget>[
+                            SelectionCountDisplay(
+                              selectedItems: selectedItems,
+                              onClear: deselectAllItems,
+                              onDownload: downloadSelectedItems,
+                            ),
+                            Expanded(
+                              child: isGridView
+                                  ? buildGridView()
+                                  : buildListView(),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -436,19 +415,18 @@ class _AttachmentsState extends State<Attachments> {
     );
   }
 
-  Widget buildGridView(List<Map<String, dynamic>> attachments) {
+  Widget buildGridView() {
     var screenSize = MediaQuery.of(context).size;
     return GridView.builder(
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 1, // number of grid columns
+        crossAxisCount: 1,
       ),
       itemCount: attachments.length,
       itemBuilder: (context, index) {
         var attachment = attachments[index];
         var url = attachment['url'];
         var title = attachment['title'];
-        var date = attachment[
-            'published_date']; // Use 'published_date' instead of 'study_material_attachment_published_date'
+        var date = attachment['published_date'];
         var extension = url.split('.').last;
         String assetName = 'assets/word.svg';
         switch (extension) {
@@ -460,6 +438,7 @@ class _AttachmentsState extends State<Attachments> {
             assetName = 'assets/ppt.svg';
             break;
           case 'doc':
+          case 'doc':
           case 'docx':
             assetName = 'assets/word.svg';
             break;
@@ -470,7 +449,7 @@ class _AttachmentsState extends State<Attachments> {
           child: CheckboxListTile(
             controlAffinity: ListTileControlAffinity.leading,
             value: selectedItems[index],
-            onChanged: (bool? value) => selectItem(index),
+            onChanged: (bool? value) => selectItem(index, value),
             title: SvgPicture.asset(
               assetName,
               width: screenSize.width * 0.1,
@@ -484,7 +463,7 @@ class _AttachmentsState extends State<Attachments> {
     );
   }
 
-  Widget buildListView(List<Map<String, dynamic>> attachments) {
+  Widget buildListView() {
     var screenSize = MediaQuery.of(context).size;
     return ListView.builder(
       itemCount: attachments.length,
@@ -512,7 +491,7 @@ class _AttachmentsState extends State<Attachments> {
         return CheckboxListTile(
           controlAffinity: ListTileControlAffinity.leading,
           value: selectedItems[index],
-          onChanged: (bool? value) => selectItem(index),
+          onChanged: (bool? value) => selectItem(index, value),
           title: SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: Row(
@@ -529,6 +508,56 @@ class _AttachmentsState extends State<Attachments> {
           ),
         );
       },
+    );
+  }
+}
+
+class SelectionCountDisplay extends StatefulWidget {
+  final List<bool> selectedItems;
+  final VoidCallback onClear;
+  final VoidCallback onDownload;
+
+  const SelectionCountDisplay({
+    super.key,
+    required this.selectedItems,
+    required this.onClear,
+    required this.onDownload,
+  });
+
+  @override
+  _SelectionCountDisplayState createState() => _SelectionCountDisplayState();
+}
+
+class _SelectionCountDisplayState extends State<SelectionCountDisplay> {
+  @override
+  Widget build(BuildContext context) {
+    int selectedCount =
+        widget.selectedItems.where((selected) => selected).length;
+
+    if (selectedCount == 0) {
+      return const SizedBox.shrink();
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: const Color(0xFFEFF6FF),
+        border: Border.all(color: const Color(0xFFD9D9D9)),
+        borderRadius: const BorderRadius.all(Radius.circular(1)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          IconButton(
+            icon: const Icon(Icons.clear),
+            onPressed: widget.onClear,
+          ),
+          Text('$selectedCount Attachments selected'),
+          IconButton(
+            icon: const Icon(Icons.download_outlined),
+            onPressed: widget.onDownload,
+          ),
+        ],
+      ),
     );
   }
 }
