@@ -586,7 +586,7 @@ class _DataSource extends DataTableSource {
                 ),
               );
             },
-            child: Text('${row.subjectCode} - ${row.subjectname}',
+            child: Text('${row.subjectname}-${row.subjectCode}',
                 style: const TextStyle(
                     color: Color(0XFF464E5B), fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis))),
