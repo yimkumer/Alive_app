@@ -372,6 +372,22 @@ class _TAttachmentsState extends State<TAttachments> {
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: <Widget>[
                               IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.edit_note_outlined,
+                                  )),
+                              IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.restore_from_trash,
+                                  )),
+                              IconButton(
+                                  onPressed: () {},
+                                  icon: const Icon(
+                                    Icons.add,
+                                    color: Colors.purple,
+                                  )),
+                              IconButton(
                                 icon: const Icon(Icons.download_outlined),
                                 onPressed: () async {
                                   final directoryPath = await FilePicker
