@@ -37,6 +37,7 @@ class _AttachmentsState extends State<Attachments> {
   @override
   void initState() {
     super.initState();
+    print(widget.materialId);
     studyMaterialFuture = fetchStudyMaterial();
     fetchAttachments().then((fetchedAttachments) {
       setState(() {
@@ -72,10 +73,10 @@ class _AttachmentsState extends State<Attachments> {
   }
 
   Future<void> downloadSelectedItems() async {
-    List<String> selectedUrls = [];
+    List<Map<String, dynamic>> selectedAttachments = [];
     for (int i = 0; i < attachments.length; i++) {
       if (selectedItems[i]) {
-        selectedUrls.add(attachments[i]['url']);
+        selectedAttachments.add(attachments[i]);
       }
     }
 
@@ -84,32 +85,47 @@ class _AttachmentsState extends State<Attachments> {
       return;
     }
 
+    List<String> allUrls = [];
+    for (var attachment in selectedAttachments) {
+      String url = await fetchDownloadLink(
+          attachment['study_material_attachment_id'],
+          attachment['study_material_attachment_url']);
+      allUrls.add(url);
+    }
+
     final studyMaterialName =
         await fetchStudyMaterial().then((data) => data['name']);
-    await downloadMultipleFiles(selectedUrls, directoryPath, studyMaterialName);
+
+    await downloadMultipleFiles(allUrls, directoryPath, studyMaterialName);
+
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Download completed!')),
     );
+    deselectAllItems();
   }
 
-  Future<List<String>> fetchDownloadLink(int materialId) async {
+  Future<String> fetchDownloadLink(
+      int attachmentId, String attachmentUrl) async {
     var headers = {
       'Authorization': 'Bearer ${widget.token}',
+      'Content-Type': 'application/json',
     };
     var request = http.Request(
-      'GET',
+      'POST',
       Uri.parse(
-          'https://studymaterial-api.alive.university/api/study-material/$materialId/download'),
+          'https://studymaterial-api.alive.university/api/study-material/attachment/$attachmentId/download'),
     );
+    request.body = json.encode({"url": attachmentUrl});
     request.headers.addAll(headers);
+
     http.StreamedResponse response = await request.send();
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       var jsonData = jsonDecode(responseBody);
-      print('jsonData: $jsonData');
-      print('jsonData[data]: ${jsonData['data']}');
-      return List<String>.from(jsonData['data']);
+      print('Response body: $responseBody');
+      return jsonData['data']; // The URL is directly in the 'data' field
     } else {
+      print('Error: ${response.reasonPhrase}');
       throw Exception('Failed to fetch download link');
     }
   }
@@ -128,6 +144,7 @@ class _AttachmentsState extends State<Attachments> {
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       var jsonData = jsonDecode(responseBody);
+      print(jsonData);
       var studyMaterial = jsonData['data']['studyMaterial'];
       var studyMaterialName =
           studyMaterial['study_material_name'] ?? 'Default Name';
@@ -159,22 +176,23 @@ class _AttachmentsState extends State<Attachments> {
       var responseBody = await response.stream.bytesToString();
       var responseJson = jsonDecode(responseBody);
       var data = responseJson['data'];
-      var attachments = data
-          .map((item) {
-            DateTime parsedDate =
-                DateTime.parse(item['study_material_attachment_published_date'])
-                    .toLocal();
-            String formattedDate =
-                DateFormat('dd/MM/yyyy, hh:mm a').format(parsedDate);
+      var attachments = data.map<Map<String, dynamic>>((item) {
+        DateTime parsedDate =
+            DateTime.parse(item['study_material_attachment_published_date'])
+                .toLocal();
+        String formattedDate =
+            DateFormat('dd/MM/yyyy, hh:mm a').format(parsedDate);
 
-            return {
-              'url': item['study_material_attachment_url'],
-              'title': item['study_material_attachment_title'],
-              'published_date': formattedDate,
-            };
-          })
-          .toList()
-          .cast<Map<String, dynamic>>();
+        return {
+          'url': item['study_material_attachment_url'],
+          'title': item['study_material_attachment_title'],
+          'published_date': formattedDate,
+          'material_id': item['study_material_attachment_id'],
+          'study_material_attachment_id': item['study_material_attachment_id'],
+          'study_material_attachment_url':
+              item['study_material_attachment_url'],
+        };
+      }).toList();
       return attachments;
     } else {
       throw Exception('Failed to load attachments');
@@ -357,8 +375,6 @@ class _AttachmentsState extends State<Attachments> {
                               IconButton(
                                 icon: const Icon(Icons.download_outlined),
                                 onPressed: () async {
-                                  List<String> urls = await fetchDownloadLink(
-                                      widget.materialId);
                                   final directoryPath = await FilePicker
                                       .platform
                                       .getDirectoryPath();
@@ -366,17 +382,26 @@ class _AttachmentsState extends State<Attachments> {
                                     return;
                                   }
 
-                                  final dir = Directory(directoryPath);
-                                  if (!dir.existsSync()) {
-                                    dir.createSync(recursive: true);
+                                  final studyMaterialName =
+                                      await fetchStudyMaterial()
+                                          .then((data) => data['name']);
+
+                                  List<String> allUrls = [];
+                                  for (var attachment in attachments) {
+                                    String url = await fetchDownloadLink(
+                                        attachment[
+                                            'study_material_attachment_id'],
+                                        attachment[
+                                            'study_material_attachment_url']);
+                                    allUrls.add(url);
                                   }
 
-                                  await downloadMultipleFiles(
-                                      urls, directoryPath, studyMaterialName);
+                                  await downloadMultipleFiles(allUrls,
+                                      directoryPath, studyMaterialName);
+
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     const SnackBar(
-                                      content: Text('Download completed!'),
-                                    ),
+                                        content: Text('Download completed!')),
                                   );
                                 },
                               ),
@@ -514,6 +539,7 @@ class _AttachmentsState extends State<Attachments> {
         var attachment = filteredAttachments[index];
         var url = attachment['url'];
         var title = attachment['title'];
+        var date = attachment['published_date'];
         var extension = url.split('.').last;
         String assetName = 'assets/word.svg';
         switch (extension) {
@@ -545,8 +571,22 @@ class _AttachmentsState extends State<Attachments> {
                   width: screenSize.width * 0.1,
                   height: screenSize.height * 0.1,
                 ),
-                Text(title,
-                    style: TextStyle(fontSize: screenSize.width * 0.03)),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
+                        style: TextStyle(
+                            fontSize: screenSize.width * 0.040,
+                            fontWeight: FontWeight.w500)),
+                    Text(
+                      date,
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: screenSize.width * 0.03,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
@@ -586,7 +626,7 @@ class _SelectionCountDisplayState extends State<SelectionCountDisplay> {
       decoration: BoxDecoration(
         color: const Color(0xFFEFF6FF),
         border: Border.all(color: const Color(0xFFD9D9D9)),
-        borderRadius: const BorderRadius.all(Radius.circular(1)),
+        borderRadius: const BorderRadius.all(Radius.circular(13)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
