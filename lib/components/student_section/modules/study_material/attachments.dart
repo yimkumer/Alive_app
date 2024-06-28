@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
@@ -8,7 +7,6 @@ import 'package:intl/intl.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:archive/archive.dart';
 import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
 class Attachments extends StatefulWidget {
   final int materialId;
@@ -37,7 +35,6 @@ class _AttachmentsState extends State<Attachments> {
   @override
   void initState() {
     super.initState();
-    print(widget.materialId);
     studyMaterialFuture = fetchStudyMaterial();
     fetchAttachments().then((fetchedAttachments) {
       setState(() {
@@ -122,8 +119,7 @@ class _AttachmentsState extends State<Attachments> {
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       var jsonData = jsonDecode(responseBody);
-      print('Response body: $responseBody');
-      return jsonData['data']; // The URL is directly in the 'data' field
+      return jsonData['data'];
     } else {
       print('Error: ${response.reasonPhrase}');
       throw Exception('Failed to fetch download link');
@@ -144,7 +140,6 @@ class _AttachmentsState extends State<Attachments> {
     if (response.statusCode == 200) {
       String responseBody = await response.stream.bytesToString();
       var jsonData = jsonDecode(responseBody);
-      print(jsonData);
       var studyMaterial = jsonData['data']['studyMaterial'];
       var studyMaterialName =
           studyMaterial['study_material_name'] ?? 'Default Name';

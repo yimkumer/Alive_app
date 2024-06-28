@@ -50,7 +50,7 @@ class StudyMaterial extends StatefulWidget {
 }
 
 class _StudyMaterialState extends State<StudyMaterial> {
-  final Map<String, String> instituteIds = {
+  Map<String, String> instituteIds = {
     'Acharya Institute Of Technology': 'AIT',
     'Acharya Institute of Graduate Studies': 'AGS',
     'Acharya Polytechnic': 'APT',
@@ -76,6 +76,27 @@ class _StudyMaterialState extends State<StudyMaterial> {
   void initState() {
     super.initState();
     preloadData();
+    fetchOrganizations();
+  }
+
+  Future<void> fetchOrganizations() async {
+    var headers = {'Authorization': 'Bearer ${widget.token}'};
+    var request = http.Request(
+        'GET', Uri.parse('https://api.alive.university/api/v1/organization'));
+    request.headers.addAll(headers);
+    http.StreamedResponse response = await request.send();
+    if (response.statusCode == 200) {
+      var responseBody = await response.stream.bytesToString();
+      var responseJson = jsonDecode(responseBody);
+      setState(() {
+        instituteIds = {
+          for (var item in responseJson['data'])
+            item['institute_name']: item['institute_name_short']
+        };
+      });
+    } else {
+      print(response.reasonPhrase);
+    }
   }
 
   Future<void> preloadData() async {
@@ -249,15 +270,14 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                       .map<DropdownMenuItem<String>>(
                                           (String key) {
                                     return DropdownMenuItem<String>(
-                                      value: key,
+                                      value: instituteIds[key],
                                       child: Text(key),
                                     );
                                   }).toList(),
                                   onChanged: (String? newValue) {
                                     setState(() {
                                       instituteId = newValue;
-                                      dataFuture =
-                                          fetchData(instituteIds[newValue]);
+                                      dataFuture = fetchData(instituteId);
                                     });
                                   },
                                   hint: Text(
