@@ -113,10 +113,13 @@ class _StudyMaterialState extends State<StudyMaterial> {
       String responseBody = await response.stream.bytesToString();
       Map<String, dynamic> jsonResponse = json.decode(responseBody);
       List materials = jsonResponse['data']['materials'] ?? [];
-      setState(() {
-        allMaterials =
-            materials.map((item) => StudyMaterialData.fromJson(item)).toList();
-      });
+      if (mounted) {
+        setState(() {
+          allMaterials = materials
+              .map((item) => StudyMaterialData.fromJson(item))
+              .toList();
+        });
+      }
     } else {
       print(response.reasonPhrase);
     }
@@ -264,14 +267,13 @@ class _StudyMaterialState extends State<StudyMaterial> {
                               ),
                               child: DropdownButtonHideUnderline(
                                 child: DropdownButton<String>(
-                                  value: dropdownValue,
-                                  style: const TextStyle(color: Colors.black),
-                                  items: instituteIds.keys
-                                      .map<DropdownMenuItem<String>>(
-                                          (String key) {
+                                  value: instituteId,
+                                  style: const TextStyle(color: Colors.white),
+                                  items: instituteIds.entries
+                                      .map<DropdownMenuItem<String>>((entry) {
                                     return DropdownMenuItem<String>(
-                                      value: instituteIds[key],
-                                      child: Text(key),
+                                      value: entry.value,
+                                      child: Text(entry.key),
                                     );
                                   }).toList(),
                                   onChanged: (String? newValue) {
@@ -285,10 +287,10 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                         ? instituteIds[instituteId] ??
                                             'Select Institute'
                                         : 'Select Institute',
-                                    style: const TextStyle(
-                                        color: Colors.white, fontSize: 16),
+                                    style: const TextStyle(color: Colors.white),
                                   ),
-                                  dropdownColor: Colors.white,
+                                  dropdownColor: const Color(0xFFE25A26),
+                                  borderRadius: BorderRadius.circular(12.0),
                                   elevation: 8,
                                   isExpanded: true,
                                   itemHeight: 50,
