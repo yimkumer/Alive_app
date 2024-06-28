@@ -284,8 +284,10 @@ class _StudyMaterialState extends State<StudyMaterial> {
                                   },
                                   hint: Text(
                                     instituteId != null
-                                        ? instituteIds[instituteId] ??
-                                            'Select Institute'
+                                        ? instituteIds.entries
+                                            .firstWhere((entry) =>
+                                                entry.value == instituteId)
+                                            .key
                                         : 'Select Institute',
                                     style: const TextStyle(color: Colors.white),
                                   ),
@@ -548,6 +550,9 @@ class _DataSource extends DataTableSource {
                 const SizedBox(width: 8),
                 Expanded(
                     child: Text(row.studyMaterialName,
+                        style: const TextStyle(
+                            color: Color(0XFF464E5B),
+                            fontWeight: FontWeight.bold),
                         overflow: TextOverflow.ellipsis)),
               ],
             ),
@@ -566,7 +571,9 @@ class _DataSource extends DataTableSource {
               );
             },
             child: Text(row.studyMaterialCreatedBy,
-                overflow: TextOverflow.ellipsis))),
+                style: const TextStyle(
+                    color: Color(0XFF464E5B), fontWeight: FontWeight.bold),
+                overflow: TextOverflow.clip))),
         DataCell(GestureDetector(
             onTap: () {
               Navigator.push(
@@ -580,6 +587,8 @@ class _DataSource extends DataTableSource {
               );
             },
             child: Text('${row.subjectCode} - ${row.subjectname}',
+                style: const TextStyle(
+                    color: Color(0XFF464E5B), fontWeight: FontWeight.bold),
                 overflow: TextOverflow.ellipsis))),
         DataCell(
           const Icon(Icons.download_rounded),
