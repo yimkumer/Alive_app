@@ -82,175 +82,150 @@ class _TStudyMaterialState extends State<TStudyMaterial> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        body: Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: Card(
-            elevation: 8,
-            child: Column(
-              children: [
-                Container(
-                  width: MediaQuery.of(context).size.width * 1,
-                  height: MediaQuery.of(context).size.height * 0.28,
-                  decoration: BoxDecoration(
-                    image: DecorationImage(
-                        image: const AssetImage('assets/book.jpg'),
-                        fit: BoxFit.cover,
-                        colorFilter: ColorFilter.mode(
-                            Colors.black.withOpacity(0.61), BlendMode.darken)),
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(20.0),
-                      topRight: Radius.circular(20.0),
+        body: Column(
+          children: [
+            Container(
+              width: MediaQuery.of(context).size.width * 1,
+              height: MediaQuery.of(context).size.height * 0.24,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                    image: const AssetImage('assets/book.jpg'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                        Colors.black.withOpacity(0.61), BlendMode.darken)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 15, 0, 0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        'Manage your study materials here',
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16.0,
+                            fontWeight: FontWeight.w500),
+                      ),
                     ),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 15, 0, 0),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Your Study Materials',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 30.0,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
+                    const SizedBox(height: 10.0),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 15),
+                      width: MediaQuery.of(context).size.width * 0.9,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        decoration: const InputDecoration(
+                          hintText: 'Search by subjects',
+                          icon: Icon(Icons.search),
+                          border: InputBorder.none,
                         ),
-                        const Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            'Manage your study materials here',
+                        onChanged: filterMaterials,
+                      ),
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFE25A26),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(9.0),
+                        ),
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                TCreateMaterial(token: widget.token),
+                          ),
+                        );
+                      },
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                          Text(
+                            " Create",
                             style: TextStyle(
                                 color: Colors.white,
-                                fontSize: 16.0,
+                                fontSize: 17,
                                 fontWeight: FontWeight.w500),
                           ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextField(
-                            controller: searchController,
-                            decoration: const InputDecoration(
-                              hintText: 'Search by subjects',
-                              icon: Icon(Icons.search),
-                              border: InputBorder.none,
-                            ),
-                            onChanged: filterMaterials,
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE25A26),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(9.0),
-                            ),
-                          ),
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    TCreateMaterial(token: widget.token),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Expanded(
+              child: isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : filteredMaterials.isEmpty
+                      ? const Center(child: Text('No materials found'))
+                      : SingleChildScrollView(
+                          child: PaginatedDataTable(
+                            headingRowColor: WidgetStateColor.resolveWith(
+                                (states) =>
+                                    const Color.fromARGB(255, 236, 236, 236)),
+                            rowsPerPage: _rowsPerPage,
+                            availableRowsPerPage: const <int>[10, 25, 50],
+                            onRowsPerPageChanged: (int? value) {
+                              setState(() {
+                                _rowsPerPage = value ?? _rowsPerPage;
+                              });
+                            },
+                            columns: const <DataColumn>[
+                              DataColumn(
+                                label: Text(
+                                  'MATERIAL NAME',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                            );
-                          },
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.add,
-                                color: Colors.white,
-                                size: 24,
+                              DataColumn(
+                                label: Text(
+                                  'SUBJECT-CODE',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
-                              Text(
-                                " Create",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500),
+                              DataColumn(
+                                label: Text(
+                                  'CREATED ON',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              DataColumn(
+                                label: Text(
+                                  'DOCUMENT COUNT',
+                                  style: TextStyle(
+                                      color: Color.fromARGB(255, 116, 115, 115),
+                                      fontWeight: FontWeight.bold),
+                                ),
                               ),
                             ],
+                            source: _DataSource(
+                                context, filteredMaterials, widget.token),
                           ),
                         ),
-                      ],
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: isLoading
-                      ? const Center(child: CircularProgressIndicator())
-                      : filteredMaterials.isEmpty
-                          ? const Center(child: Text('No materials found'))
-                          : SingleChildScrollView(
-                              child: PaginatedDataTable(
-                                headingRowColor: WidgetStateColor.resolveWith(
-                                    (states) => const Color.fromARGB(
-                                        255, 236, 236, 236)),
-                                rowsPerPage: _rowsPerPage,
-                                availableRowsPerPage: const <int>[10, 25, 50],
-                                onRowsPerPageChanged: (int? value) {
-                                  setState(() {
-                                    _rowsPerPage = value ?? _rowsPerPage;
-                                  });
-                                },
-                                columns: const <DataColumn>[
-                                  DataColumn(
-                                    label: Text(
-                                      'MATERIAL NAME',
-                                      style: TextStyle(
-                                          color: Color.fromARGB(
-                                              255, 116, 115, 115),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'SUBJECT-CODE',
-                                      style: TextStyle(
-                                          color: Color.fromARGB(
-                                              255, 116, 115, 115),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'CREATED ON',
-                                      style: TextStyle(
-                                          color: Color.fromARGB(
-                                              255, 116, 115, 115),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                  DataColumn(
-                                    label: Text(
-                                      'DOCUMENT COUNT',
-                                      style: TextStyle(
-                                          color: Color.fromARGB(
-                                              255, 116, 115, 115),
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ],
-                                source: _DataSource(
-                                    context, filteredMaterials, widget.token),
-                              ),
-                            ),
-                ),
-              ],
             ),
-          ),
+          ],
         ),
       ),
     );

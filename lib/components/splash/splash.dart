@@ -9,6 +9,10 @@ class Splash extends StatelessWidget {
       Navigator.pushReplacementNamed(context, '/walkthrough');
     });
 
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenWidth = screenSize.width;
+    final double screenHeight = screenSize.height;
+
     return Scaffold(
       body: Stack(
         children: <Widget>[
@@ -18,30 +22,33 @@ class Splash extends StatelessWidget {
               children: [
                 Image.asset(
                   'assets/logo.png',
-                  width: 90,
-                  height: 90,
+                  width: screenWidth * 0.2,
+                  height: screenWidth * 0.2,
                 ),
-                const Text(
+                SizedBox(width: screenWidth * 0.02), // Add a small gap
+                Text(
                   "Alive",
                   style: TextStyle(
-                      color: Color(0xff05004E),
-                      fontSize: 30,
-                      fontWeight: FontWeight.w600),
+                    color: const Color(0xff05004E),
+                    fontSize: screenWidth * 0.08,
+                    fontWeight: FontWeight.w600,
+                  ),
                 )
               ],
             ),
           ),
-          const Positioned(
-            bottom: 50,
+          Positioned(
+            bottom: screenHeight * 0.06,
             left: 0,
             right: 0,
             child: Text(
               'Powered by\nAcharya Group of Institutes',
               textAlign: TextAlign.center,
               style: TextStyle(
-                  fontSize: 16,
-                  color: Color(0xff9F9F9F),
-                  fontWeight: FontWeight.w400),
+                fontSize: screenWidth * 0.04,
+                color: const Color(0xff9F9F9F),
+                fontWeight: FontWeight.w400,
+              ),
             ),
           ),
         ],

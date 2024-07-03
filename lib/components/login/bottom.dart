@@ -38,7 +38,7 @@ class BottomWave extends StatelessWidget {
     return ClipPath(
       clipper: BottomWaveClipper(),
       child: Container(
-        height: 200,
+        height: MediaQuery.of(context).size.height * 0.3,
         width: MediaQuery.of(context).size.width,
         decoration: const BoxDecoration(
           gradient: LinearGradient(

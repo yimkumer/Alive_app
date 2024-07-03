@@ -20,6 +20,9 @@ class MainApp extends StatelessWidget {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.manual, overlays: []);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        fontFamily: 'Roboto',
+      ),
       initialRoute: '/',
       routes: {
         '/': (context) => const Splash(),

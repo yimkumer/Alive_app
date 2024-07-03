@@ -186,7 +186,7 @@ class _SubjectsState extends State<Semsubjects> {
                                       snapshot.data![selectedSemester]?[index];
                                   return Expanded(
                                     child: Card(
-                                      elevation: 8,
+                                      elevation: 1,
                                       margin: const EdgeInsets.all(8.0),
                                       child: Padding(
                                         padding: const EdgeInsets.all(8.0),

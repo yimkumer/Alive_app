@@ -4,8 +4,8 @@ class DiagonalClipper1 extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     var path = Path();
-    path.lineTo(0.0, size.height - 310);
-    path.lineTo(size.width, size.height - 390);
+    path.lineTo(0.0, size.height - (size.height * 0.37));
+    path.lineTo(size.width, size.height - (size.height * 0.46));
     path.lineTo(size.width, 0.0);
     path.close();
     return path;
@@ -19,8 +19,8 @@ class DiagonalClipper2 extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     var path = Path();
-    path.lineTo(0.0, size.height - 390);
-    path.lineTo(size.width, size.height - 310);
+    path.lineTo(0.0, size.height - (size.height * 0.46));
+    path.lineTo(size.width, size.height - (size.height * 0.37));
     path.lineTo(size.width, 0.0);
     path.close();
     return path;
@@ -43,6 +43,10 @@ class _WalkthroughState extends State<Walkthrough> {
 
   @override
   Widget build(BuildContext context) {
+    final Size screenSize = MediaQuery.of(context).size;
+    final double screenHeight = screenSize.height;
+    final double screenWidth = screenSize.width;
+
     return Scaffold(
       body: Stack(
         children: [
@@ -54,167 +58,29 @@ class _WalkthroughState extends State<Walkthrough> {
               });
             },
             children: [
-              // First Page
-              Stack(
-                children: [
-                  ClipPath(
-                    clipper: DiagonalClipper1(),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFFFFFFF),
-                            Color(0xFFDCF0FF),
-                            Color(0xFFBAE2FF),
-                          ],
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            top: MediaQuery.of(context).size.height / 9.5,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Image.asset("assets/g1.png"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Positioned(
-                    bottom: 200,
-                    left: 0,
-                    right: 0,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Text(
-                          "Elevate Your\nLearning Experience",
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _buildPage(
+                screenSize,
+                DiagonalClipper1(),
+                "assets/g1.png",
+                "Elevate Your\nLearning Experience",
               ),
-              //Second Page
-              Stack(
-                children: [
-                  ClipPath(
-                    clipper: DiagonalClipper2(),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFFFFFFF),
-                            Color(0xFFDCF0FF),
-                            Color(0xFFBAE2FF),
-                          ],
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            top: MediaQuery.of(context).size.height / 9.5,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Image.asset("assets/g2.png"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Positioned(
-                    bottom: 200,
-                    left: 0,
-                    right: 0,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Text(
-                          "Explore Your\nNew Skill Today",
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _buildPage(
+                screenSize,
+                DiagonalClipper2(),
+                "assets/g2.png",
+                "Explore Your\nNew Skill Today",
               ),
-              //Third Page
-              Stack(
-                children: [
-                  ClipPath(
-                    clipper: DiagonalClipper1(),
-                    child: Container(
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            Color(0xFFFFFFFF),
-                            Color(0xFFDCF0FF),
-                            Color(0xFFBAE2FF),
-                          ],
-                        ),
-                      ),
-                      child: Stack(
-                        children: [
-                          Positioned(
-                            top: MediaQuery.of(context).size.height / 9.5,
-                            left: 0,
-                            right: 0,
-                            child: Center(
-                              child: Image.asset("assets/g3.png"),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const Positioned(
-                    bottom: 200,
-                    left: 0,
-                    right: 0,
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: Padding(
-                        padding: EdgeInsets.all(20.0),
-                        child: Text(
-                          "Unlock Your Potential\nAnytime, Anywhere\nLearn with Ease",
-                          style: TextStyle(
-                              color: Colors.black,
-                              fontSize: 24,
-                              fontWeight: FontWeight.w500),
-                          textAlign: TextAlign.center,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
+              _buildPage(
+                screenSize,
+                DiagonalClipper1(),
+                "assets/g3.png",
+                "Unlock Your Potential\nAnytime, Anywhere\nLearn with Ease",
               ),
             ],
           ),
           Positioned(
-            top: 20,
-            right: 10,
+            top: screenHeight * 0.02,
+            right: screenWidth * 0.02,
             child: TextButton(
               onPressed: () {
                 Navigator.pushReplacementNamed(context, '/login');
@@ -226,7 +92,7 @@ class _WalkthroughState extends State<Walkthrough> {
             ),
           ),
           Positioned(
-            bottom: 80,
+            bottom: screenHeight * 0.095,
             left: 0,
             right: 0,
             child: Column(
@@ -247,7 +113,7 @@ class _WalkthroughState extends State<Walkthrough> {
                     );
                   }),
                 ),
-                const SizedBox(height: 50),
+                SizedBox(height: screenHeight * 0.06),
                 OutlinedButton(
                   onPressed: () {
                     if (currentPage < 2) {
@@ -275,6 +141,66 @@ class _WalkthroughState extends State<Walkthrough> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPage(Size screenSize, CustomClipper<Path> clipper,
+      String imagePath, String text) {
+    return Stack(
+      children: [
+        ClipPath(
+          clipper: clipper,
+          child: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color(0xFFFFFFFF),
+                  Color(0xFFDCF0FF),
+                  Color(0xFFBAE2FF),
+                ],
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  top: screenSize.height * 0.105,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Image.asset(
+                      imagePath,
+                      width: screenSize.width * 0.9,
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        Positioned(
+          bottom: screenSize.height * 0.24,
+          left: 0,
+          right: 0,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Text(
+                text,
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 24,
+                  fontWeight: FontWeight.w500,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

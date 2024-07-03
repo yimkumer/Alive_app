@@ -205,310 +205,283 @@ class _StudyMaterialState extends State<StudyMaterial> {
       },
       child: Scaffold(
         resizeToAvoidBottomInset: false,
-        body: Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: Card(
-            elevation: 8,
-            child: Column(
+        body: Column(
+          children: <Widget>[
+            Stack(
               children: <Widget>[
-                Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    Container(
-                      width: MediaQuery.of(context).size.width * 1,
-                      height: MediaQuery.of(context).size.height * 0.3,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                            image: const AssetImage('assets/book.jpg'),
-                            fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(
-                                Colors.black.withOpacity(0.61),
-                                BlendMode.darken)),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20.0),
-                          topRight: Radius.circular(20.0),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            const Align(
-                              alignment: Alignment.centerLeft,
-                              child: Column(
-                                children: [
-                                  Text(
-                                    'Study Materials',
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 30.0,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  Text(
-                                    'Browse study materials here',
-                                    style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 16.0,
-                                        fontWeight: FontWeight.w500),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE25A26),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: instituteId,
-                                  style: const TextStyle(color: Colors.white),
-                                  items: instituteIds.entries
-                                      .map<DropdownMenuItem<String>>((entry) {
-                                    return DropdownMenuItem<String>(
-                                      value: entry.value,
-                                      child: Text(entry.key),
-                                    );
-                                  }).toList(),
-                                  onChanged: (String? newValue) {
-                                    setState(() {
-                                      instituteId = newValue;
-                                      dataFuture = fetchData(instituteId);
-                                    });
-                                  },
-                                  hint: Text(
-                                    instituteId != null
-                                        ? instituteIds.entries
-                                            .firstWhere((entry) =>
-                                                entry.value == instituteId)
-                                            .key
-                                        : 'Select Institute',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  dropdownColor: const Color(0xFFE25A26),
-                                  borderRadius: BorderRadius.circular(12.0),
-                                  elevation: 8,
-                                  isExpanded: true,
-                                  itemHeight: 50,
-                                  iconEnabledColor: Colors.white,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 10.0),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 15),
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: TextField(
-                                controller: searchTextController,
-                                onChanged: (value) {
-                                  setState(() {
-                                    searchQuery = value;
-                                    if (value.isNotEmpty) {
-                                      dataFuture = Future.value(
-                                          filterStudyMaterials(allMaterials));
-                                    } else {
-                                      dataFuture = null;
-                                    }
-                                  });
-                                },
-                                decoration: const InputDecoration(
-                                  hintText: 'Search by subject name or code...',
-                                  border: InputBorder.none,
-                                  icon: Icon(Icons.search),
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                Expanded(
-                  child: FutureBuilder<List<StudyMaterialData>>(
-                    future: dataFuture,
-                    builder: (BuildContext context,
-                        AsyncSnapshot<List<StudyMaterialData>> snapshot) {
-                      if (dataFuture == null && searchQuery.isEmpty) {
-                        return SingleChildScrollView(
+                Container(
+                  width: MediaQuery.of(context).size.width * 1,
+                  height: MediaQuery.of(context).size.height * 0.24,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: const AssetImage('assets/book.jpg'),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.61), BlendMode.darken)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 18.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const Align(
+                          alignment: Alignment.centerLeft,
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const SizedBox(height: 30.0),
-                              SvgPicture.asset(
-                                'assets/smaterials.svg',
-                                height: 200,
-                              ),
-                              const SizedBox(height: 10.0),
-                              const Text(
-                                'Please select an institute to browse study materials or search',
-                                textAlign: TextAlign.center,
+                              Text(
+                                'Browse your study materials here',
                                 style: TextStyle(
-                                  color: Color(0xFF656565),
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                    color: Colors.white,
+                                    fontSize: 16.0,
+                                    fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),
-                        );
-                      } else if (snapshot.connectionState ==
-                          ConnectionState.waiting) {
-                        return const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: <Widget>[
-                              SizedBox(
-                                height: 50.0,
-                                width: 50.0,
-                                child: CircularProgressIndicator(),
-                              ),
-                              Padding(
-                                padding: EdgeInsets.only(top: 20.0),
-                                child: Text(
-                                  "Fetching data...",
-                                  style: TextStyle(
-                                      color: Color.fromARGB(255, 119, 118, 118),
-                                      fontSize: 15),
-                                ),
-                              ),
-                            ],
+                        ),
+                        const SizedBox(height: 16.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE25A26),
+                            borderRadius: BorderRadius.circular(8.0),
                           ),
-                        );
-                      } else if (snapshot.hasError) {
-                        print('Error: ${snapshot.error}');
-                        return Text('Error: ${snapshot.error}');
-                      } else if (snapshot.hasData) {
-                        List<StudyMaterialData> data =
-                            snapshot.data as List<StudyMaterialData>;
-                        List<StudyMaterialData> filteredData =
-                            filterStudyMaterials(data);
-                        if (filteredData.isEmpty) {
-                          return SingleChildScrollView(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                const SizedBox(height: 30.0),
-                                SvgPicture.asset(
-                                  'assets/no_material.svg',
-                                  height: 200,
-                                ),
-                                const SizedBox(height: 10.0),
-                                Text(
-                                  searchQuery.isEmpty
-                                      ? "Selected institute doesn't seem to have any study materials"
-                                      : "No matching study materials found",
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    color: Color(0xFF656565),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                                const SizedBox(height: 20.0),
-                                ElevatedButton(
-                                  style: ButtonStyle(
-                                    backgroundColor:
-                                        WidgetStateProperty.all<Color>(
-                                            Colors.purple),
-                                    shape: WidgetStateProperty.all<
-                                        RoundedRectangleBorder>(
-                                      RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(10.0),
-                                      ),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    setState(() {
-                                      dataFuture = null;
-                                      searchTextController.clear();
-                                      searchQuery = '';
-                                      instituteId = null;
-                                    });
-                                  },
-                                  child: const Text(
-                                    'Remove Filter',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        } else {
-                          return SingleChildScrollView(
-                            child: PaginatedDataTable(
-                              headingRowColor: WidgetStateColor.resolveWith(
-                                  (states) =>
-                                      const Color.fromARGB(255, 236, 236, 236)),
-                              rowsPerPage: _rowsPerPage,
-                              availableRowsPerPage: const <int>[10, 25, 50],
-                              onRowsPerPageChanged: (int? value) {
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: instituteId,
+                              style: const TextStyle(color: Colors.white),
+                              items: instituteIds.entries
+                                  .map<DropdownMenuItem<String>>((entry) {
+                                return DropdownMenuItem<String>(
+                                  value: entry.value,
+                                  child: Text(entry.key),
+                                );
+                              }).toList(),
+                              onChanged: (String? newValue) {
                                 setState(() {
-                                  _rowsPerPage = value ?? _rowsPerPage;
+                                  instituteId = newValue;
+                                  dataFuture = fetchData(instituteId);
                                 });
                               },
-                              columns: const <DataColumn>[
-                                DataColumn(
-                                  label: Text(
-                                    'MATERIAL NAME',
-                                    style: TextStyle(
-                                        color:
-                                            Color.fromARGB(255, 116, 115, 115),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'CREATED BY',
-                                    style: TextStyle(
-                                        color:
-                                            Color.fromARGB(255, 116, 115, 115),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'SUBJECT-CODE',
-                                    style: TextStyle(
-                                        color:
-                                            Color.fromARGB(255, 116, 115, 115),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                                DataColumn(
-                                  label: Text(
-                                    'ACTION',
-                                    style: TextStyle(
-                                        color:
-                                            Color.fromARGB(255, 116, 115, 115),
-                                        fontWeight: FontWeight.bold),
-                                  ),
-                                ),
-                              ],
-                              source: _DataSource(context, filteredData,
-                                  getDownloadLink, widget.token),
+                              hint: Text(
+                                instituteId != null
+                                    ? instituteIds.entries
+                                        .firstWhere((entry) =>
+                                            entry.value == instituteId)
+                                        .key
+                                    : 'Select Institute',
+                                style: const TextStyle(color: Colors.white),
+                              ),
+                              dropdownColor: const Color(0xFFE25A26),
+                              borderRadius: BorderRadius.circular(12.0),
+                              elevation: 1,
+                              isExpanded: true,
+                              itemHeight: 50,
+                              iconEnabledColor: Colors.white,
                             ),
-                          );
-                        }
-                      } else {
-                        return const Text('No data');
-                      }
-                    },
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            controller: searchTextController,
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value;
+                                if (value.isNotEmpty) {
+                                  dataFuture = Future.value(
+                                      filterStudyMaterials(allMaterials));
+                                } else {
+                                  dataFuture = null;
+                                }
+                              });
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Search by subject name or code...',
+                              border: InputBorder.none,
+                              icon: Icon(Icons.search),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
+            Expanded(
+              child: FutureBuilder<List<StudyMaterialData>>(
+                future: dataFuture,
+                builder: (BuildContext context,
+                    AsyncSnapshot<List<StudyMaterialData>> snapshot) {
+                  if (dataFuture == null && searchQuery.isEmpty) {
+                    return SingleChildScrollView(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const SizedBox(height: 30.0),
+                          SvgPicture.asset(
+                            'assets/smaterials.svg',
+                            height: 200,
+                          ),
+                          const SizedBox(height: 10.0),
+                          const Text(
+                            'Please select an institute to browse study materials or search',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Color(0xFF656565),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (snapshot.connectionState ==
+                      ConnectionState.waiting) {
+                    return const Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          SizedBox(
+                            height: 50.0,
+                            width: 50.0,
+                            child: CircularProgressIndicator(),
+                          ),
+                          Padding(
+                            padding: EdgeInsets.only(top: 20.0),
+                            child: Text(
+                              "Fetching data...",
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 119, 118, 118),
+                                  fontSize: 15),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  } else if (snapshot.hasError) {
+                    print('Error: ${snapshot.error}');
+                    return Text('Error: ${snapshot.error}');
+                  } else if (snapshot.hasData) {
+                    List<StudyMaterialData> data =
+                        snapshot.data as List<StudyMaterialData>;
+                    List<StudyMaterialData> filteredData =
+                        filterStudyMaterials(data);
+                    if (filteredData.isEmpty) {
+                      return SingleChildScrollView(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 30.0),
+                            SvgPicture.asset(
+                              'assets/no_material.svg',
+                              height: 200,
+                            ),
+                            const SizedBox(height: 10.0),
+                            Text(
+                              searchQuery.isEmpty
+                                  ? "Selected institute doesn't seem to have any study materials"
+                                  : "No matching study materials found",
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Color(0xFF656565),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            const SizedBox(height: 20.0),
+                            ElevatedButton(
+                              style: ButtonStyle(
+                                backgroundColor: WidgetStateProperty.all<Color>(
+                                    Colors.purple),
+                                shape: WidgetStateProperty.all<
+                                    RoundedRectangleBorder>(
+                                  RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10.0),
+                                  ),
+                                ),
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  dataFuture = null;
+                                  searchTextController.clear();
+                                  searchQuery = '';
+                                  instituteId = null;
+                                });
+                              },
+                              child: const Text(
+                                'Remove Filter',
+                                style: TextStyle(color: Colors.white),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      return SingleChildScrollView(
+                        child: PaginatedDataTable(
+                          headingRowColor: WidgetStateColor.resolveWith(
+                              (states) =>
+                                  const Color.fromARGB(255, 236, 236, 236)),
+                          rowsPerPage: _rowsPerPage,
+                          availableRowsPerPage: const <int>[10, 25, 50],
+                          onRowsPerPageChanged: (int? value) {
+                            setState(() {
+                              _rowsPerPage = value ?? _rowsPerPage;
+                            });
+                          },
+                          columns: const <DataColumn>[
+                            DataColumn(
+                              label: Text(
+                                'MATERIAL NAME',
+                                style: TextStyle(
+                                    color: Color.fromARGB(255, 116, 115, 115),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'CREATED BY',
+                                style: TextStyle(
+                                    color: Color.fromARGB(255, 116, 115, 115),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'SUBJECT-CODE',
+                                style: TextStyle(
+                                    color: Color.fromARGB(255, 116, 115, 115),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            DataColumn(
+                              label: Text(
+                                'ACTION',
+                                style: TextStyle(
+                                    color: Color.fromARGB(255, 116, 115, 115),
+                                    fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                          source: _DataSource(context, filteredData,
+                              getDownloadLink, widget.token),
+                        ),
+                      );
+                    }
+                  } else {
+                    return const Text('No data');
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

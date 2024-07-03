@@ -94,255 +94,224 @@ class _TSubjectsState extends State<TSubjects> {
         FocusScope.of(context).unfocus();
       },
       child: Scaffold(
-        body: Padding(
-          padding: const EdgeInsets.all(5.0),
-          child: Card(
-            color: const Color(0xFFFDF9F0),
-            elevation: 8,
-            child: Column(
+        body: Column(
+          children: <Widget>[
+            Stack(
               children: <Widget>[
-                Stack(
-                  alignment: Alignment.center,
-                  children: <Widget>[
-                    Container(
-                      width: MediaQuery.of(context).size.width * 1,
-                      height: MediaQuery.of(context).size.height * 0.3,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                            image: const AssetImage('assets/subjects.jpg'),
-                            fit: BoxFit.cover,
-                            colorFilter: ColorFilter.mode(
-                                Colors.black.withOpacity(0.61),
-                                BlendMode.darken)),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20.0),
-                          topRight: Radius.circular(20.0),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8.0),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            const Align(
-                              alignment: Alignment.centerLeft,
-                              child: SingleChildScrollView(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Your Subjects',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 30.0,
-                                        fontWeight: FontWeight.w500,
-                                      ),
-                                    ),
-                                    Text(
-                                      'Manage your subjects',
-                                      style: TextStyle(
-                                          color: Colors.white,
-                                          fontSize: 16.0,
-                                          fontWeight: FontWeight.w500),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 16.0),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 15),
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: TextField(
-                                controller: _searchController,
-                                decoration: const InputDecoration(
-                                  hintText: 'Search subjects...',
-                                  border: InputBorder.none,
-                                  icon: Icon(Icons.search),
-                                ),
-                                onChanged: (text) {
-                                  setState(() {
-                                    searchText = text;
-                                  });
-                                },
-                              ),
-                            ),
-                            const SizedBox(height: 10.0),
-                            Container(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 20),
-                              width: MediaQuery.of(context).size.width * 0.8,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE25A26),
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                              child: FutureBuilder<List<Subject>>(
-                                future: dataFuture,
-                                builder: (BuildContext context,
-                                    AsyncSnapshot snapshot) {
-                                  if (snapshot.connectionState ==
-                                      ConnectionState.waiting) {
-                                    return const Text(
-                                      'Year...',
-                                      style: TextStyle(
-                                          fontSize: 16, color: Colors.white),
-                                    );
-                                  } else if (snapshot.hasError) {
-                                    return Text('Error: ${snapshot.error}');
-                                  } else {
-                                    var semesters = snapshot.data!
-                                        .map((subject) => subject.acYear)
-                                        .toSet()
-                                        .toList();
-                                    semesters.sort();
-
-                                    dropdownValue =
-                                        dropdownValue ?? semesters.last;
-                                    return SizedBox(
-                                      height: 50.0,
-                                      child: DropdownButtonHideUnderline(
-                                        child: DropdownButton<String>(
-                                          value: dropdownValue,
-                                          style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 16),
-                                          items: semesters
-                                              .map<DropdownMenuItem<String>>(
-                                                  (value) {
-                                            return DropdownMenuItem<String>(
-                                              value: value,
-                                              child:
-                                                  Text("Academic year $value"),
-                                            );
-                                          }).toList(),
-                                          onChanged: (String? newValue) {
-                                            setState(() {
-                                              dropdownValue = newValue;
-                                            });
-                                          },
-                                          dropdownColor:
-                                              const Color(0xFFE25A26),
-                                          borderRadius:
-                                              BorderRadius.circular(12.0),
-                                          iconEnabledColor: Colors.white,
-                                          elevation: 8,
-                                          isExpanded: true,
-                                          itemHeight: 50,
-                                        ),
-                                      ),
-                                    );
-                                  }
-                                },
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-
-                // Displaying the Subjects
-                Expanded(
-                  child: FutureBuilder<List<Subject>>(
-                    future: dataFuture,
-                    builder: (context, snapshot) {
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(child: Text('Loading...'));
-                      } else if (snapshot.hasError) {
-                        return Text(
-                            'Error: ${snapshot.error}\nStack trace: ${snapshot.stackTrace}');
-                      } else {
-                        var subjects = snapshot.data!
-                            .where((subject) => subject.acYear == dropdownValue)
-                            .toList();
-                        final searchText = _searchController.text.toLowerCase();
-                        final filteredSubjects = subjects.where((subject) {
-                          final subjectName = subject.subjectName.toLowerCase();
-                          final subjectCode = subject.subjectCode.toLowerCase();
-                          return subjectName.contains(searchText) ||
-                              subjectCode.contains(searchText);
-                        }).toList();
-                        return filteredSubjects.isEmpty
-                            ? Center(
-                                child: RichText(
-                                  text: TextSpan(
-                                    style: DefaultTextStyle.of(context).style,
-                                    children: <TextSpan>[
-                                      const TextSpan(
-                                          text:
-                                              'No subject matches the search text: ',
-                                          style: TextStyle(
-                                              fontWeight: FontWeight.bold)),
-                                      TextSpan(
-                                          text: searchText,
-                                          style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontStyle: FontStyle.italic)),
-                                    ],
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                itemCount: filteredSubjects.length,
-                                itemBuilder: (context, index) {
-                                  final subject = filteredSubjects[index];
-                                  return Container(
-                                    margin: const EdgeInsets.all(10.0),
-                                    decoration: BoxDecoration(
+                Container(
+                  width: double.infinity,
+                  height: MediaQuery.of(context).size.height * 0.28,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: const AssetImage('assets/subjects.jpg'),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.61), BlendMode.darken)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 18.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: SingleChildScrollView(
+                            child: Column(
+                              children: [
+                                Text(
+                                  'Manage all your subjects here',
+                                  style: TextStyle(
                                       color: Colors.white,
-                                      borderRadius: BorderRadius.circular(10.0),
+                                      fontSize: 16.0,
+                                      fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            controller: _searchController,
+                            decoration: const InputDecoration(
+                              hintText: 'Search subjects...',
+                              border: InputBorder.none,
+                              icon: Icon(Icons.search),
+                            ),
+                            onChanged: (text) {
+                              setState(() {
+                                searchText = text;
+                              });
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          width: MediaQuery.of(context).size.width * 0.7,
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE25A26),
+                            borderRadius: BorderRadius.circular(8.0),
+                          ),
+                          child: FutureBuilder<List<Subject>>(
+                            future: dataFuture,
+                            builder:
+                                (BuildContext context, AsyncSnapshot snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Text(
+                                  'Academic Year...',
+                                  style: TextStyle(
+                                      fontSize: 16, color: Colors.white),
+                                );
+                              } else if (snapshot.hasError) {
+                                return Text('Error: ${snapshot.error}');
+                              } else {
+                                var semesters = snapshot.data!
+                                    .map((subject) => subject.acYear)
+                                    .toSet()
+                                    .toList();
+                                semesters.sort();
+
+                                dropdownValue = dropdownValue ?? semesters.last;
+                                return SizedBox(
+                                  height: 50.0,
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: dropdownValue,
+                                      style: const TextStyle(
+                                          color: Colors.white, fontSize: 16),
+                                      items: semesters
+                                          .map<DropdownMenuItem<String>>(
+                                              (value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text("Academic year $value"),
+                                        );
+                                      }).toList(),
+                                      onChanged: (String? newValue) {
+                                        setState(() {
+                                          dropdownValue = newValue;
+                                        });
+                                      },
+                                      dropdownColor: const Color(0xFFE25A26),
+                                      borderRadius: BorderRadius.circular(12.0),
+                                      iconEnabledColor: Colors.white,
+                                      elevation: 1,
+                                      isExpanded: true,
+                                      itemHeight: 50,
                                     ),
-                                    child: ListTile(
-                                      leading: Container(
-                                        width:
-                                            MediaQuery.of(context).size.width *
-                                                0.17,
-                                        decoration: BoxDecoration(
-                                          color: Colors.white,
-                                          border: Border.all(
-                                              color: const Color(0xFFFF7039)),
-                                          borderRadius:
-                                              BorderRadius.circular(10.0),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            subject.subjectNameShort.substring(
-                                                0,
-                                                min(
-                                                    3,
-                                                    subject.subjectNameShort
-                                                        .length)),
-                                            style: const TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 15),
-                                          ),
-                                        ),
-                                      ),
-                                      title: Text(
-                                          '${subject.subjectName} (${subject.subjectCode})',
-                                          style: const TextStyle(
-                                              color: Colors.black)),
-                                      subtitle: Text(subject.subjectNameShort,
-                                          style: const TextStyle(
-                                              color: Color.fromARGB(
-                                                  255, 97, 96, 96))),
-                                    ),
-                                  );
-                                },
-                              );
-                      }
-                    },
+                                  ),
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
-          ),
+
+            // Displaying the Subjects
+            Expanded(
+              child: FutureBuilder<List<Subject>>(
+                future: dataFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: Text('Loading...'));
+                  } else if (snapshot.hasError) {
+                    return Text(
+                        'Error: ${snapshot.error}\nStack trace: ${snapshot.stackTrace}');
+                  } else {
+                    var subjects = snapshot.data!
+                        .where((subject) => subject.acYear == dropdownValue)
+                        .toList();
+                    final searchText = _searchController.text.toLowerCase();
+                    final filteredSubjects = subjects.where((subject) {
+                      final subjectName = subject.subjectName.toLowerCase();
+                      final subjectCode = subject.subjectCode.toLowerCase();
+                      return subjectName.contains(searchText) ||
+                          subjectCode.contains(searchText);
+                    }).toList();
+                    return filteredSubjects.isEmpty
+                        ? Center(
+                            child: RichText(
+                              text: TextSpan(
+                                style: DefaultTextStyle.of(context).style,
+                                children: <TextSpan>[
+                                  const TextSpan(
+                                      text:
+                                          'No subject matches the search text: ',
+                                      style: TextStyle(
+                                          fontWeight: FontWeight.bold)),
+                                  TextSpan(
+                                      text: searchText,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontStyle: FontStyle.italic)),
+                                ],
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            itemCount: filteredSubjects.length,
+                            itemBuilder: (context, index) {
+                              final subject = filteredSubjects[index];
+                              return Container(
+                                margin: const EdgeInsets.all(10.0),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(10.0),
+                                ),
+                                child: ListTile(
+                                  leading: Container(
+                                    width: MediaQuery.of(context).size.width *
+                                        0.17,
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      border: Border.all(
+                                          color: const Color(0xFFFF7039)),
+                                      borderRadius: BorderRadius.circular(10.0),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        subject.subjectNameShort.substring(
+                                            0,
+                                            min(
+                                                3,
+                                                subject
+                                                    .subjectNameShort.length)),
+                                        style: const TextStyle(
+                                            color: Colors.black, fontSize: 15),
+                                      ),
+                                    ),
+                                  ),
+                                  title: Text(
+                                      '${subject.subjectName} (${subject.subjectCode})',
+                                      style:
+                                          const TextStyle(color: Colors.black)),
+                                  subtitle: Text(subject.subjectNameShort,
+                                      style: const TextStyle(
+                                          color:
+                                              Color.fromARGB(255, 97, 96, 96))),
+                                ),
+                              );
+                            },
+                          );
+                  }
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );

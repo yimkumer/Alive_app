@@ -290,7 +290,7 @@ class _AttachmentsState extends State<Attachments> {
               return Padding(
                 padding: const EdgeInsets.all(5.0),
                 child: Card(
-                  elevation: 8.0,
+                  elevation: 1.0,
                   child: SingleChildScrollView(
                     child: Column(
                       children: <Widget>[

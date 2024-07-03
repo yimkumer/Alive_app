@@ -157,7 +157,7 @@ class _FacultyState extends State<Faculty> {
               _showGridMenu(context);
             }
           },
-          elevation: 8.0,
+          elevation: 1.0,
           selectedItemColor: Colors.blue,
         ),
       ),

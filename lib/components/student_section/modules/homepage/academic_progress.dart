@@ -32,8 +32,7 @@ class AcademicProgress extends StatelessWidget {
                   children: [
                     buildCard(
                         "Overall", 0.87, const Color(0xFF50B5FF), context),
-                    buildCard("Individual Year", 0.75, const Color(0xFFFFBB00),
-                        context),
+                    buildCard("Year", 0.75, const Color(0xFFFFBB00), context),
                     buildCard(
                         "Required", 0.65, const Color(0xFF9656FF), context),
                     buildCard(
@@ -56,7 +55,7 @@ class AcademicProgress extends StatelessWidget {
       child: Column(
         children: [
           Card(
-            elevation: 5,
+            elevation: 1,
             shape: RoundedRectangleBorder(
               side: BorderSide(color: color, width: 1.0),
               borderRadius: BorderRadius.circular(7.0),
@@ -73,7 +72,7 @@ class AcademicProgress extends StatelessWidget {
             ),
           ),
           Card(
-            elevation: 5,
+            elevation: 1,
             shape: RoundedRectangleBorder(
               side: BorderSide(color: color, width: 1.0),
               borderRadius: BorderRadius.circular(8.0),

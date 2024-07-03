@@ -20,7 +20,7 @@ class _TCreateMaterialState extends State<TCreateMaterial> {
         body: Padding(
           padding: const EdgeInsets.all(5),
           child: Card(
-            elevation: 8,
+            elevation: 1,
             child: SingleChildScrollView(
               child: Column(
                 children: [
