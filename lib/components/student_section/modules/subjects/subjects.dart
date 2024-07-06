@@ -160,7 +160,7 @@ class _SubjectsState extends State<Subjects> {
                         const SizedBox(height: 10.0),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 20),
-                          width: MediaQuery.of(context).size.width * 0.4,
+                          width: MediaQuery.of(context).size.width * 0.5,
                           decoration: BoxDecoration(
                             color: const Color(0xFFE25A26),
                             borderRadius: BorderRadius.circular(8.0),
