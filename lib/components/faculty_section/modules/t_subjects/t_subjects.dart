@@ -100,7 +100,7 @@ class _TSubjectsState extends State<TSubjects> {
               children: <Widget>[
                 Container(
                   width: double.infinity,
-                  height: MediaQuery.of(context).size.height * 0.28,
+                  height: MediaQuery.of(context).size.height * 0.24,
                   decoration: BoxDecoration(
                     image: DecorationImage(
                         image: const AssetImage('assets/subjects.jpg'),

@@ -119,7 +119,8 @@ class _LoginFormState extends State<LoginForm> {
                                   widget.onLogin(widget.usernameController.text,
                                       widget.passwordController.text);
                                 },
-                                child: const Text('SIGN IN'),
+                                child: const Text('SIGN IN',
+                                    style: TextStyle(fontSize: 17)),
                               ),
                             ),
                           ],

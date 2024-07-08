@@ -1,343 +1,365 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class TCreateMaterial extends StatefulWidget {
-  const TCreateMaterial({super.key, required String token});
+  final String token;
+
+  const TCreateMaterial({super.key, required this.token});
 
   @override
   State<TCreateMaterial> createState() => _TCreateMaterialState();
 }
 
 class _TCreateMaterialState extends State<TCreateMaterial> {
+  List<dynamic> subjects = [];
+  String? selectedSubject;
+  String latestAcYear = '';
+  final TextEditingController _materialNameController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _tagsController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    fetchSubjects();
+  }
+
+  @override
+  void dispose() {
+    _materialNameController.dispose();
+    _descriptionController.dispose();
+    _tagsController.dispose();
+    super.dispose();
+  }
+
+  fetchSubjects() async {
+    var headers = {
+      'Authorization': 'Bearer ${widget.token}',
+    };
+    var request = http.Request(
+        'GET', Uri.parse('https://api.alive.university/api/v1/user-subjects'));
+
+    request.headers.addAll(headers);
+
+    http.StreamedResponse response = await request.send();
+
+    if (response.statusCode == 200) {
+      String data = await response.stream.bytesToString();
+      var jsonData = json.decode(data);
+      setState(() {
+        subjects = jsonData['data'];
+        if (subjects.isNotEmpty) {
+          // Sort subjects by ac_year in descending order
+          subjects.sort((a, b) => b['ac_year'].compareTo(a['ac_year']));
+          // Get the latest ac_year
+          latestAcYear = subjects.first['ac_year'];
+          // Filter subjects to only include those from the latest ac_year
+          subjects = subjects
+              .where((subject) => subject['ac_year'] == latestAcYear)
+              .toList();
+          // Remove duplicates based on subject name, code, and academic year
+          subjects = subjects.fold<List<dynamic>>([], (uniqueList, subject) {
+            if (!uniqueList.any((s) =>
+                s['subject_name'] == subject['subject_name'] &&
+                s['subject_code'] == subject['subject_code'] &&
+                s['ac_year'] == subject['ac_year'])) {
+              uniqueList.add(subject);
+            }
+            return uniqueList;
+          });
+        }
+      });
+    } else {
+      print(response.reasonPhrase);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () {
-        FocusScope.of(context).unfocus();
-      },
+      onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        resizeToAvoidBottomInset: false,
-        body: Padding(
-          padding: const EdgeInsets.all(5),
-          child: Card(
-            elevation: 1,
-            child: SingleChildScrollView(
-              child: Column(
-                children: [
-                  Container(
-                    width: MediaQuery.of(context).size.width * 1,
-                    height: MediaQuery.of(context).size.height * 0.18,
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerLeft,
-                        end: Alignment.centerRight,
-                        colors: [
-                          Color(0xFF312F42),
-                          Color(0xFF3D3B53),
-                          Color(0xFF4A4864),
-                        ],
-                      ),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(20.0),
-                        topRight: Radius.circular(20.0),
-                      ),
-                    ),
-                    child: const Padding(
-                      padding: EdgeInsets.fromLTRB(20, 15, 0, 0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Add new material',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 30.0,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ),
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              'Provide all the required information to create a material',
-                              style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16.0,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  Container(
-                    padding: const EdgeInsets.all(25),
-                    decoration: BoxDecoration(
-                      color: const Color(0XFFFCFCFC),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    width: MediaQuery.of(context).size.width * 0.9,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                  child: IntrinsicHeight(
                     child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        //First input field Material name
-                        const Text("Material name *",
-                            style: TextStyle(
-                                fontSize: 17,
-                                color: Color(0xFF7B7E8B),
-                                fontWeight: FontWeight.bold)),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Eg: New material for DS',
-                              hintStyle: const TextStyle(
-                                color: Color(0xFF7B7E8B),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF7B7E8B)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF59B9FE)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-
-                        //Second input field Description
-                        const SizedBox(
-                          height: 30,
-                        ),
-                        const Text("Description *",
-                            style: TextStyle(
-                                fontSize: 17,
-                                color: Color(0xFF7B7E8B),
-                                fontWeight: FontWeight.bold)),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextFormField(
-                            decoration: InputDecoration(
-                              hintText: 'Description goes here...',
-                              hintStyle: const TextStyle(
-                                color: Color(0xFF7B7E8B),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF7B7E8B)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF59B9FE)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              border: InputBorder.none,
-                            ),
-                            maxLines: 5,
-                            keyboardType: TextInputType.multiline,
-                          ),
-                        ),
-
-                        //Third input field Material Subject selection
-                        const SizedBox(
-                          height: 30,
-                        ),
-                        const Text("Material Subject *",
-                            style: TextStyle(
-                                fontSize: 17,
-                                color: Color(0xFF7B7E8B),
-                                fontWeight: FontWeight.bold)),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Eg: New material for DS',
-                              hintStyle: const TextStyle(
-                                color: Color(0xFF7B7E8B),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF7B7E8B)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF59B9FE)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(
-                          height: 10,
-                        ),
-                        const Text(
-                            "If subject not displayed in the dropdown then you already have a material for that subject",
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF7B7E8B),
-                                fontWeight: FontWeight.bold)),
-
-                        //Fourth input field Tags name
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        const Text(
-                            "Add Tags (Type tags as comma seperated values)",
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF7B7E8B),
-                                fontWeight: FontWeight.bold)),
-                        Container(
-                          width: MediaQuery.of(context).size.width * 0.85,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextField(
-                            decoration: InputDecoration(
-                              hintText: 'Add new tag',
-                              hintStyle: const TextStyle(
-                                color: Color(0xFF7B7E8B),
-                              ),
-                              enabledBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF7B7E8B)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              focusedBorder: OutlineInputBorder(
-                                borderSide:
-                                    const BorderSide(color: Color(0xFF59B9FE)),
-                                borderRadius: BorderRadius.circular(5),
-                              ),
-                              border: InputBorder.none,
-                            ),
-                          ),
-                        ),
-
-                        //IconButton for upload
-                        const SizedBox(
-                          height: 20,
-                        ),
-                        const Text(
-                            "Upload Attachments\nSupports: .pdf, .docx, .ppsx, .pptx, .odp\n",
-                            style: TextStyle(
-                                fontSize: 15,
-                                color: Color(0xFF7B7E8B),
-                                fontWeight: FontWeight.bold)),
-                        Align(
-                          alignment: Alignment.center,
-                          child: CustomPaint(
-                            painter: DashedRect(
-                                color: Colors.grey[800]!,
-                                strokeWidth: 2,
-                                gap: 5),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.grey[300],
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                              child: IconButton(
-                                onPressed: () {},
-                                icon: const Icon(
-                                  Icons.upload_file_outlined,
-                                  size: 100,
-                                  color: Color.fromARGB(255, 133, 132, 132),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        //Bottom Buttons
-                        const SizedBox(height: 20),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            //Add new material button
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF139CFF),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6.0),
-                                ),
-                              ),
-                              onPressed: () {},
-                              child: const Text(
-                                " Add New Material",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ),
-
-                            //Cancel button
-                            ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFFFF6A7F),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(6.0),
-                                ),
-                              ),
-                              onPressed: () {
-                                Navigator.pop(context);
-                              },
-                              child: const Text(
-                                " Cancel",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.w500),
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildHeader(constraints),
+                        Expanded(child: _buildForm(constraints)),
                       ],
                     ),
-                  )
-                ],
-              ),
-            ),
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
     );
   }
+
+  Widget _buildHeader(BoxConstraints constraints) {
+    return Container(
+      width: constraints.maxWidth,
+      height: constraints.maxHeight * 0.18,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
+          colors: [
+            Color(0xFF312F42),
+            Color(0xFF3D3B53),
+            Color(0xFF4A4864),
+          ],
+        ),
+      ),
+      child: const Padding(
+        padding: EdgeInsets.fromLTRB(20, 15, 20, 0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text(
+              'Add new material',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 30.0,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Provide all the required information to create a material',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16.0,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildForm(BoxConstraints constraints) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildInputField("Material name *", _materialNameController,
+              'Eg: New material for DS'),
+          const SizedBox(height: 20),
+          _buildInputField("Description *", _descriptionController,
+              'Description goes here...',
+              maxLines: 5),
+          const SizedBox(height: 20),
+          _buildDropdown(constraints),
+          const SizedBox(height: 20),
+          _buildInputField("Add Tags (Type tags as comma separated values)",
+              _tagsController, 'Add new tag'),
+          const SizedBox(height: 20),
+          _buildUploadSection(constraints),
+          const SizedBox(height: 20),
+          _buildButtons(constraints),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInputField(
+      String label, TextEditingController controller, String hint,
+      {int maxLines = 1}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 17,
+            color: Color(0xFF7B7E8B),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: controller,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            hintText: hint,
+            hintStyle: const TextStyle(color: Color(0xFF7B7E8B)),
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(5)),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Color(0xFF59B9FE)),
+              borderRadius: BorderRadius.circular(5),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDropdown(BoxConstraints constraints) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Material Subject *",
+          style: TextStyle(
+            fontSize: 17,
+            color: Color(0xFF7B7E8B),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          width: constraints.maxWidth,
+          decoration: BoxDecoration(
+            border: Border.all(color: const Color(0xFF7B7E8B)),
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              isExpanded: true,
+              hint: const Text("Select Subject"),
+              value: selectedSubject,
+              items: subjects.map<DropdownMenuItem<String>>((subject) {
+                String displayText =
+                    "${subject['subject_name']} - ${subject['subject_code']} (${subject['ac_year']})";
+                return DropdownMenuItem<String>(
+                  value: displayText,
+                  child: Text(displayText),
+                );
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedSubject = value;
+                });
+              },
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          "Showing subjects for academic year: $latestAcYear",
+          style: const TextStyle(
+            fontSize: 12,
+            color: Color(0xFF7B7E8B),
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildUploadSection(BoxConstraints constraints) {
+    return CustomPaint(
+      painter: DashedRect(
+        color: const Color(0xFF83CBFF),
+        strokeWidth: 2,
+        gap: 5,
+      ),
+      child: GestureDetector(
+        onTap: () {
+          // Add your file upload logic here
+        },
+        child: Container(
+          width: constraints.maxWidth,
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: const Color(0XFFF3FAFF),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Column(
+            children: [
+              Icon(
+                Icons.upload_file_outlined,
+                size: constraints.maxWidth * 0.2,
+                color: const Color(0xFF5FBBFF),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                "Upload Attachments by tapping here\nSupports: .pdf, .docx, .ppsx, .pptx, .odp",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 15,
+                  color: Color(0xFF7B7E8B),
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildButtons(BoxConstraints constraints) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF139CFF),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6.0),
+            ),
+          ),
+          onPressed: () {
+            // Add your logic for adding new material
+          },
+          child: const Text(
+            "Add New Material",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+        ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFFFF6A7F),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6.0),
+            ),
+          ),
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          child: const Text(
+            "Cancel",
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 17,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }
 
-// Custom painter for dashed border
 class DashedRect extends CustomPainter {
   final Color color;
   final double strokeWidth;
   final double gap;
 
-  DashedRect(
-      {this.color = Colors.black, this.strokeWidth = 1.0, this.gap = 5.0});
+  DashedRect({
+    this.color = Colors.black,
+    this.strokeWidth = 1.0,
+    this.gap = 5.0,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -375,7 +397,5 @@ class DashedRect extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) {
-    return false;
-  }
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

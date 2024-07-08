@@ -10,6 +10,75 @@ class FAQ extends StatefulWidget {
 
 class _FAQState extends State<FAQ> {
   int? currentPanelIndex;
+  String searchQuery = '';
+
+  final List<Map<String, dynamic>> faqSections = [
+    {
+      'title': 'Online Classes',
+      'items': [
+        {
+          'question': 'How to join a class?',
+          'answer':
+              'Allow permissions such as camera and microphone in the browser. Go to home/dashboard page and under online classes section, join the scheduled class by clicking on join',
+        },
+      ],
+    },
+    {
+      'title': 'Exam',
+      'items': [
+        {
+          'question': 'Can exams be taken on mobile devices?',
+          'answer': 'Yes. But a device with larger sceen is recommended',
+        },
+        {
+          'question': 'Is fullscreen mandatory while taking the exam?',
+          'answer': 'Yes. If fullscreen mode is exited the exam will be ended',
+        },
+        {
+          'question':
+              'What happens if window focus is changes during the exam?',
+          'answer': 'The exam will be ended',
+        },
+      ],
+    },
+    {
+      'title': 'Study Material',
+      'items': [
+        {
+          'question': 'Can study materials of other branch are accessible',
+          'answer': 'Yes',
+        },
+        {
+          'question': 'Is it possible to dowload entire study material?',
+          'answer': 'Yes. In a compressed zip file',
+        },
+      ],
+    },
+  ];
+
+  List<Map<String, dynamic>> get filteredSections {
+    if (searchQuery.isEmpty) {
+      return faqSections;
+    }
+    return faqSections
+        .map((section) {
+          final filteredItems = section['items']
+              .where((item) =>
+                  item['question']
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase()) ||
+                  item['answer']
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase()))
+              .toList();
+          return {
+            'title': section['title'],
+            'items': filteredItems,
+          };
+        })
+        .where((section) => section['items'].isNotEmpty)
+        .toList();
+  }
 
   @override
   void initState() {
@@ -18,55 +87,83 @@ class _FAQState extends State<FAQ> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Card(
-          elevation: 8.0,
-          child: ListView(
-            children: [
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Frequently Asked Questions',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: ListView(
+          children: [
+            Stack(
+              children: <Widget>[
+                Container(
+                  width: MediaQuery.of(context).size.width * 1,
+                  height: MediaQuery.of(context).size.height * 0.24,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: const AssetImage('assets/faq_bg.png'),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.61), BlendMode.darken)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 18.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            children: [
+                              Text(
+                                "View all FAQ'S here",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              hintText: 'Search',
+                              border: InputBorder.none,
+                              icon: Icon(Icons.search),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const Divider(color: Colors.grey),
-              buildCustomExpansionPanelList('Online Classes', [
-                buildCustomExpansionPanel(
-                    'How to join a class?',
-                    'Allow permissions such as camera and microphone in the browser. Go to home/dashboard page and under online classes section, join the scheduled class by clicking on join',
-                    0),
-              ]),
-              buildCustomExpansionPanelList('Exam', [
-                buildCustomExpansionPanel(
-                    'Can exams be taken on mobile devices?',
-                    'Yes. But a device with larger sceen is recommended',
-                    1),
-                buildCustomExpansionPanel(
-                    'Is fullscreen mandatory while taking the exam?',
-                    'Yes. If fullscreen mode is exited the exam will be ended',
-                    2),
-                buildCustomExpansionPanel(
-                    'What happens if window focus is changes during the exam?',
-                    'The exam will be ended',
-                    3),
-              ]),
-              buildCustomExpansionPanelList('Study Material', [
-                buildCustomExpansionPanel(
-                    'Can study materials of other branch are accessible',
-                    'Yes',
-                    4),
-                buildCustomExpansionPanel(
-                    'Is it possible to dowload entire study material?',
-                    'Yes. In a compressed zip file',
-                    5),
-              ]),
-            ],
-          ),
+              ],
+            ),
+            ...filteredSections.map((section) => buildCustomExpansionPanelList(
+                section['title'],
+                (section['items'] as List)
+                    .asMap()
+                    .entries
+                    .map((entry) => buildCustomExpansionPanel(
+                        entry.value['question'],
+                        entry.value['answer'],
+                        faqSections.indexOf(section) * 100 + entry.key))
+                    .toList())),
+          ],
         ),
       ),
     );

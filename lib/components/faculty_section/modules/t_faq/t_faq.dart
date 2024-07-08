@@ -10,84 +10,188 @@ class TFaq extends StatefulWidget {
 
 class _TFaqState extends State<TFaq> {
   int? currentPanelIndex;
+  String searchQuery = '';
+
+  final List<Map<String, dynamic>> faqSections = [
+    {
+      'title': 'Online Classes',
+      'items': [
+        {
+          'question': 'How to join a class?',
+          'answer':
+              'Allow permissions such as camera and microphone in the browser. Go to home/dashboard page and under online classes section, join the scheduled class by clicking on join'
+        },
+        {
+          'question': 'How to take attendance?',
+          'answer':
+              'Once joined the sessions attendence will be taken automatically in certain interval of time'
+        },
+        {
+          'question': 'How to schedule online classes?',
+          'answer':
+              "Add class to your time table using ERP and mark it as <em className='faq-em'>online</em>"
+        },
+      ],
+    },
+    {
+      'title': 'Exam',
+      'items': [
+        {
+          'question': 'How to create an exam?',
+          'answer':
+              '1.  Click on the "+" at the bottom right corner of the screen in exams page\n'
+                  '2.  Fill all the required fields such as exam name, description, topics, exam start and end time, and batches\n'
+                  '3.  Click on the "Create" button at the bottom'
+        },
+        {
+          'question': 'How to add questions to an exam?',
+          'answer': 'From a file\n\n'
+              '1.  Click on the Import Question button in exam page\n'
+              '2. Choose a text file in aiken format to import questions\n\n'
+              'From the UI\n\n'
+              '1. Click on the Add Question button in exam page\n'
+              '2. Fill all the required fields\n'
+              '3. Click on the Add button to add new question'
+        },
+        {
+          'question': 'Is the question restricted to english language only?',
+          'answer':
+              'No. question can be framed in any language in text file or through UI'
+        },
+      ],
+    },
+    {
+      'title': 'Study Material',
+      'items': [
+        {
+          'question': 'What are the supported file formats?',
+          'answer': '.pdf, .docx, .ppsx, .pptx, .odp'
+        },
+        {
+          'question': 'Can files be added after creation of study material?',
+          'answer': 'Yes'
+        },
+        {
+          'question': 'Which students have access to my notes?',
+          'answer':
+              'Any student with Alive access will be able to access any study material on Alive'
+        },
+      ],
+    },
+    {
+      'title': 'Academic Progress',
+      'items': [
+        {
+          'question': 'Can study materials of other branch are accessible',
+          'answer': 'Yes'
+        },
+      ],
+    },
+  ];
+
+  List<Map<String, dynamic>> get filteredSections {
+    if (searchQuery.isEmpty) {
+      return faqSections;
+    }
+    return faqSections
+        .map((section) {
+          final filteredItems = section['items']
+              .where((item) =>
+                  item['question']
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase()) ||
+                  item['answer']
+                      .toLowerCase()
+                      .contains(searchQuery.toLowerCase()))
+              .toList();
+          return {
+            'title': section['title'],
+            'items': filteredItems,
+          };
+        })
+        .where((section) => section['items'].isNotEmpty)
+        .toList();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Card(
-          elevation: 8.0,
-          child: ListView(
-            children: [
-              const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(8.0),
-                  child: Text(
-                    'Frequently Asked Questions',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w500),
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        body: ListView(
+          children: [
+            Stack(
+              children: <Widget>[
+                Container(
+                  width: MediaQuery.of(context).size.width * 1,
+                  height: MediaQuery.of(context).size.height * 0.24,
+                  decoration: BoxDecoration(
+                    image: DecorationImage(
+                        image: const AssetImage('assets/faq_bg.png'),
+                        fit: BoxFit.cover,
+                        colorFilter: ColorFilter.mode(
+                            Colors.black.withOpacity(0.61), BlendMode.darken)),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.only(left: 18.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        const Align(
+                          alignment: Alignment.centerLeft,
+                          child: Column(
+                            children: [
+                              Text(
+                                "View all FAQ'S here",
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18.0,
+                                    fontWeight: FontWeight.w500),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            decoration: const InputDecoration(
+                              hintText: 'Search',
+                              border: InputBorder.none,
+                              icon: Icon(Icons.search),
+                            ),
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-              const Divider(color: Colors.grey),
-              buildCustomExpansionPanelList('Online Classes', [
-                buildCustomExpansionPanel(
-                    'How to join a class?',
-                    'Allow permissions such as camera and microphone in the browser. Go to home/dashboard page and under online classes section, join the scheduled class by clicking on join',
-                    0),
-                buildCustomExpansionPanel(
-                    'How to take attendance?',
-                    'Once joined the sessions attendence will be taken automatically in certain interval of time',
-                    1),
-                buildCustomExpansionPanel(
-                    'How to schedule online classes?',
-                    "Add class to your time table using ERP and mark it as <em className='faq-em'>online</em>",
-                    2),
-              ]),
-              buildCustomExpansionPanelList('Exam', [
-                buildCustomExpansionPanel(
-                    'How to create an exam?',
-                    '1.  Click on the "+" at the bottom right corner of the screen in exams page\n'
-                        '2.  Fill all the required fields such as exam name, description, topics, exam start and end time, and batches\n'
-                        '3.  Click on the "Create" button at the bottom',
-                    3),
-                buildCustomExpansionPanel(
-                    'How to add questions to an exam?',
-                    'From a file\n\n'
-                        '1.  Click on the Import Question button in exam page\n'
-                        '2. Choose a text file in aiken format to import questions\n\n'
-                        'From the UI\n\n'
-                        '1. Click on the Add Question button in exam page\n'
-                        '2. Fill all the required fields\n'
-                        '3. Click on the Add button to add new question',
-                    4),
-                buildCustomExpansionPanel(
-                    'Is the question restricted to english language only?',
-                    'No. question can be framed in any language in text file or through UI',
-                    5),
-              ]),
-              buildCustomExpansionPanelList('Study Material', [
-                buildCustomExpansionPanel(
-                    'What are the supported file formats?',
-                    '.pdf, .docx, .ppsx, .pptx, .odp',
-                    6),
-                buildCustomExpansionPanel(
-                    'Can files be added after creation of study material?',
-                    'Yes',
-                    7),
-                buildCustomExpansionPanel(
-                    'Which students have access to my notes?',
-                    'Any student with Alive access will be able to access any study material on Alive',
-                    8),
-              ]),
-              buildCustomExpansionPanelList('Academic Progress', [
-                buildCustomExpansionPanel(
-                    'Can study materials of other branch are accessible',
-                    'Yes',
-                    9),
-              ]),
-            ],
-          ),
+              ],
+            ),
+            ...filteredSections.map((section) => buildCustomExpansionPanelList(
+                section['title'],
+                (section['items'] as List)
+                    .asMap()
+                    .entries
+                    .map((entry) => buildCustomExpansionPanel(
+                        entry.value['question'],
+                        entry.value['answer'],
+                        faqSections.indexOf(section) * 100 + entry.key))
+                    .toList())),
+          ],
         ),
       ),
     );

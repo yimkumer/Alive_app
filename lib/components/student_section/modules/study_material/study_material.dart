@@ -230,13 +230,41 @@ class _StudyMaterialState extends State<StudyMaterial> {
                           child: Column(
                             children: [
                               Text(
-                                'Browse your study materials here',
+                                'View all study materials here',
                                 style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 16.0,
                                     fontWeight: FontWeight.w500),
                               ),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 10.0),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 15),
+                          width: MediaQuery.of(context).size.width * 0.9,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: TextField(
+                            controller: searchTextController,
+                            onChanged: (value) {
+                              setState(() {
+                                searchQuery = value;
+                                if (value.isNotEmpty) {
+                                  dataFuture = Future.value(
+                                      filterStudyMaterials(allMaterials));
+                                } else {
+                                  dataFuture = null;
+                                }
+                              });
+                            },
+                            decoration: const InputDecoration(
+                              hintText: 'Search by subject name or code...',
+                              border: InputBorder.none,
+                              icon: Icon(Icons.search),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16.0),
@@ -279,34 +307,6 @@ class _StudyMaterialState extends State<StudyMaterial> {
                               isExpanded: true,
                               itemHeight: 50,
                               iconEnabledColor: Colors.white,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 10.0),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 15),
-                          width: MediaQuery.of(context).size.width * 0.9,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: TextField(
-                            controller: searchTextController,
-                            onChanged: (value) {
-                              setState(() {
-                                searchQuery = value;
-                                if (value.isNotEmpty) {
-                                  dataFuture = Future.value(
-                                      filterStudyMaterials(allMaterials));
-                                } else {
-                                  dataFuture = null;
-                                }
-                              });
-                            },
-                            decoration: const InputDecoration(
-                              hintText: 'Search by subject name or code...',
-                              border: InputBorder.none,
-                              icon: Icon(Icons.search),
                             ),
                           ),
                         ),

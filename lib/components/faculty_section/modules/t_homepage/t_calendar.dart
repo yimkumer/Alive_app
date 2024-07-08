@@ -151,15 +151,21 @@ class _TCalendarState extends State<TCalendar> {
                 const SizedBox(
                   width: 5,
                 ),
-                const Icon(Icons.circle, color: Color(0xFFFF6714), size: 5),
+                const Icon(Icons.circle, color: Color(0xFFFF6714), size: 8),
                 const Text(
                   "Offline",
-                  style: TextStyle(fontSize: 18, color: Color(0xFFFF6714)),
+                  style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFFFF6714),
+                      fontWeight: FontWeight.w500),
                 ),
-                const Icon(Icons.circle, color: Color(0xFF49982E), size: 5),
+                const Icon(Icons.circle, color: Color(0xFF49982E), size: 8),
                 const Text(
                   "Online",
-                  style: TextStyle(fontSize: 18, color: Color(0xFF49982E)),
+                  style: TextStyle(
+                      fontSize: 18,
+                      color: Color(0xFF49982E),
+                      fontWeight: FontWeight.w500),
                 )
               ],
             ),
