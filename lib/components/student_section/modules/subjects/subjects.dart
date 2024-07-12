@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import '../../../timeout/timeout.dart';
+
 class Subject {
   final String currentYear;
   final String currentSem;
@@ -85,6 +87,13 @@ class _SubjectsState extends State<Subjects> {
       });
 
       return subjects;
+    } else if (response.statusCode == 401) {
+      // Token has expired, handle accordingly
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Timeout()),
+        (Route<dynamic> route) => false,
+      );
+      return [];
     } else {
       throw Exception('Failed to load data');
     }

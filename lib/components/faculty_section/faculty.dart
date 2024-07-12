@@ -131,6 +131,7 @@ class _FacultyState extends State<Faculty> {
               return false;
             });
           },
+          token: widget.token,
         ),
         body: _getDrawerItemWidget(_selectedDrawerIndex),
         bottomNavigationBar: BottomNavigationBar(

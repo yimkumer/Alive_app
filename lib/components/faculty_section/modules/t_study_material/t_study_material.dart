@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../timeout/timeout.dart';
 import 't_attachments.dart';
 import 't_create_material.dart';
 
@@ -52,6 +53,12 @@ class _TStudyMaterialState extends State<TStudyMaterial> {
           filteredMaterials = List.from(allMaterials);
           isLoading = false;
         });
+      } else if (response.statusCode == 401) {
+        // Token has expired, handle accordingly
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const Timeout()),
+          (Route<dynamic> route) => false,
+        );
       } else {
         print(response.reasonPhrase);
         setState(() => isLoading = false);

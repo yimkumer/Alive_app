@@ -1,7 +1,36 @@
 import 'package:flutter/material.dart';
+import '../../student_details.dart';
 
-class ProfileSection extends StatelessWidget {
-  const ProfileSection({super.key});
+class ProfileSection extends StatefulWidget {
+  final String token;
+
+  const ProfileSection({super.key, required this.token});
+
+  @override
+  _ProfileSectionState createState() => _ProfileSectionState();
+}
+
+class _ProfileSectionState extends State<ProfileSection> {
+  String studentName = '';
+  String courseBranch = '';
+  String instituteName = '';
+  late student_details _apiService;
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = student_details(token: widget.token, context: context);
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    var userData = await _apiService.fetchUserData();
+    setState(() {
+      studentName = userData['student_name'] ?? '';
+      courseBranch = userData['course_branch_short_name'] ?? '';
+      instituteName = userData['institute_name_short'] ?? '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,16 +43,18 @@ class ProfileSection extends StatelessWidget {
           children: [
             Padding(
               padding: EdgeInsets.fromLTRB(16, 16, 0, isNarrow ? 5 : 10),
-              child: const Align(
+              child: Align(
                 alignment: Alignment.centerLeft,
-                child: Text(
-                  "Welcome Yimkumer!",
-                  style: TextStyle(
-                    color: Color(0xFF05004E),
-                    fontWeight: FontWeight.w500,
-                    fontSize: 20.0,
-                  ),
-                ),
+                child: () {
+                  return Text(
+                    "Welcome ${studentName.split(' ').first}!",
+                    style: const TextStyle(
+                      color: Color(0xFF05004E),
+                      fontWeight: FontWeight.w500,
+                      fontSize: 20.0,
+                    ),
+                  );
+                }(),
               ),
             ),
             Container(
@@ -63,11 +94,11 @@ class ProfileSection extends StatelessWidget {
                             ),
                             borderRadius: BorderRadius.circular(15),
                           ),
-                          child: const Center(
+                          child: Center(
                             child: Text(
-                              'Y',
-                              style:
-                                  TextStyle(color: Colors.white, fontSize: 20),
+                              studentName.isNotEmpty ? studentName[0] : 'S',
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 24),
                             ),
                           ),
                         ),
@@ -81,7 +112,7 @@ class ProfileSection extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          'Yimkumer Pongen',
+                          studentName,
                           style: TextStyle(
                             color: Colors.white,
                             fontSize: isNarrow ? 20 : 24,
@@ -89,14 +120,20 @@ class ProfileSection extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 5),
-                        const Text(
-                          'Department : MCA',
-                          style: TextStyle(color: Colors.white),
+                        Text(
+                          '$courseBranch Branch',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w400),
                         ),
                         const SizedBox(height: 5),
-                        const Text(
-                          'Acharya institute of technology',
-                          style: TextStyle(color: Colors.white),
+                        Text(
+                          instituteName,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 15,
+                              fontWeight: FontWeight.w400),
                         ),
                       ],
                     ),

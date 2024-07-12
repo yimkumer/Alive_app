@@ -17,7 +17,7 @@ class std_home extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const ProfileSection(),
+            ProfileSection(token: token),
             const AcademicProgress(),
             const Leaderboard(),
             Calendar(token: token),

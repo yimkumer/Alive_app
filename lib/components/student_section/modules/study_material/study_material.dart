@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:alive_app/components/student_section/modules/study_material/attachments.dart';
+import 'package:alive_app/components/timeout/timeout.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:http/http.dart' as http;
@@ -94,6 +95,12 @@ class _StudyMaterialState extends State<StudyMaterial> {
             item['institute_name']: item['institute_name_short']
         };
       });
+    } else if (response.statusCode == 401) {
+      // Token has expired, handle accordingly
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Timeout()),
+        (Route<dynamic> route) => false,
+      );
     } else {
       print(response.reasonPhrase);
     }
@@ -120,6 +127,12 @@ class _StudyMaterialState extends State<StudyMaterial> {
               .toList();
         });
       }
+    } else if (response.statusCode == 401) {
+      // Token has expired, handle accordingly
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Timeout()),
+        (Route<dynamic> route) => false,
+      );
     } else {
       print(response.reasonPhrase);
     }
@@ -173,6 +186,13 @@ class _StudyMaterialState extends State<StudyMaterial> {
       List materials = jsonResponse['data']['materials'] ?? [];
       fetchedInstituteId = instituteId;
       return materials.map((item) => StudyMaterialData.fromJson(item)).toList();
+    } else if (response.statusCode == 401) {
+      // Token has expired, handle accordingly
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Timeout()),
+        (Route<dynamic> route) => false,
+      );
+      return [];
     } else {
       throw Exception('Failed to load study materials');
     }
@@ -193,6 +213,12 @@ class _StudyMaterialState extends State<StudyMaterial> {
         var links = responseJson['data'].cast<String>();
         return links.join(', ');
       }
+    } else if (response.statusCode == 401) {
+      // Token has expired, handle accordingly
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Timeout()),
+        (Route<dynamic> route) => false,
+      );
     }
     return '';
   }

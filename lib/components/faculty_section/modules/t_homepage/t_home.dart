@@ -16,7 +16,9 @@ class THome extends StatelessWidget {
       body: SingleChildScrollView(
         child: Column(
           children: [
-            const TProfileSection(),
+            TProfileSection(
+              token: token,
+            ),
             TCalendar(token: token),
             TSemsubjects(token: token),
             const TDiscussions(),

@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'dart:math';
 import 'package:http/http.dart' as http;
 
+import '../../../timeout/timeout.dart';
+
 class Subject {
   final String acYear;
   final String subjectName;
@@ -76,6 +78,13 @@ class _TSubjectsState extends State<TSubjects> {
         }
       }
       return latestSubjects.values.toList();
+    } else if (response.statusCode == 401) {
+      // Token has expired, handle accordingly
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const Timeout()),
+        (Route<dynamic> route) => false,
+      );
+      return [];
     } else {
       throw Exception('Failed to load subjects');
     }

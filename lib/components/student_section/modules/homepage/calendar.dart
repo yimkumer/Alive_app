@@ -84,8 +84,6 @@ class _CalendarState extends State<Calendar> {
               data['data'].map((model) => ClassInfo.fromJson(model)));
         });
       }
-    } else {
-      print('Failed to load classes for $formattedDate');
     }
   }
 

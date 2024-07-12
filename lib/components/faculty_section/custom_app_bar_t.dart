@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'faculty_details.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   @override
@@ -8,6 +9,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final List<String> drawerItems;
   final ValueChanged<bool> onDarkModeToggle;
   final VoidCallback onLogout;
+  final String token;
 
   const CustomAppBar({
     super.key,
@@ -16,6 +18,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.drawerItems,
     required this.onDarkModeToggle,
     required this.onLogout,
+    required this.token,
   });
 
   @override
@@ -23,6 +26,31 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
+  late faculty_details _apiService;
+  String userName = '';
+  String userId = '';
+  String userRole = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = faculty_details(token: widget.token, context: context);
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    try {
+      var userData = await _apiService.fetchUserData();
+      setState(() {
+        userName = userData['employee_name'] ?? '';
+        userId = userData['empcode'] ?? '';
+        userRole = userData['lms_role'] ?? '';
+      });
+    } catch (e) {
+      print('Error fetching user data: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
@@ -39,9 +67,10 @@ class _CustomAppBarState extends State<CustomAppBar> {
           const Text(
             "Alive",
             style: TextStyle(
-                color: Color(0xff05004E),
-                fontSize: 20,
-                fontWeight: FontWeight.bold),
+              color: Color(0xFF05004E),
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -59,13 +88,25 @@ class _CustomAppBarState extends State<CustomAppBar> {
     );
   }
 
-  IconButton _buildSettingsButton(BuildContext context) {
+  Widget _buildSettingsButton(BuildContext context) {
     return IconButton(
       icon: Icon(Icons.settings, color: Theme.of(context).primaryColor),
       onPressed: () {
+        final RenderBox button = context.findRenderObject() as RenderBox;
+        final RenderBox overlay =
+            Overlay.of(context).context.findRenderObject() as RenderBox;
+        final RelativeRect position = RelativeRect.fromRect(
+          Rect.fromPoints(
+            button.localToGlobal(Offset.zero, ancestor: overlay),
+            button.localToGlobal(button.size.bottomRight(Offset.zero),
+                ancestor: overlay),
+          ),
+          Offset.zero & overlay.size,
+        );
+
         showMenu(
           context: context,
-          position: const RelativeRect.fromLTRB(150.0, 100.0, -50.0, 0.0),
+          position: position,
           items: [
             PopupMenuItem(
               child: StatefulBuilder(
@@ -89,7 +130,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     );
   }
 
-  GestureDetector _buildProfileButton(BuildContext context) {
+  Widget _buildProfileButton(BuildContext context) {
     return GestureDetector(
       onTap: () {
         showDialog(
@@ -100,46 +141,46 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 height: 200,
                 child: Column(
                   children: <Widget>[
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 30,
                       backgroundColor: Colors.grey,
                       child: Text(
-                        'S',
-                        style: TextStyle(color: Colors.white),
+                        userName.isNotEmpty ? userName[0] : 'F',
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    const Text(
-                      'Sumit2432',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                    const SizedBox(height: 15),
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400, fontSize: 20),
                       textAlign: TextAlign.center,
                     ),
-                    const Text(
-                      'AI002432',
-                      style: TextStyle(fontWeight: FontWeight.w300),
+                    Text(
+                      userId,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400, fontSize: 18),
                       textAlign: TextAlign.center,
                     ),
-                    const Text(
-                      'Faculty',
-                      style: TextStyle(fontWeight: FontWeight.w300),
+                    Text(
+                      userRole,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400, fontSize: 15),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        const Icon(Icons.logout, color: Colors.red),
-                        GestureDetector(
-                          onTap: widget.onLogout,
-                          child: const Text('Logout',
-                              style: TextStyle(color: Colors.red)),
-                        ),
-                      ],
+                    const SizedBox(height: 15),
+                    GestureDetector(
+                      onTap: widget.onLogout,
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          Icon(Icons.logout, color: Colors.red),
+                          SizedBox(width: 5),
+                          Text('Logout',
+                              style:
+                                  TextStyle(color: Colors.red, fontSize: 18)),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -148,11 +189,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
           },
         );
       },
-      child: const CircleAvatar(
+      child: CircleAvatar(
         backgroundColor: Colors.grey,
         child: Text(
-          'S',
-          style: TextStyle(color: Colors.white),
+          userName.isNotEmpty ? userName[0] : 'F',
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w400, fontSize: 15),
         ),
       ),
     );

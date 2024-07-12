@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'student_details.dart';
 
 class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   @override
@@ -8,6 +9,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
   final List<String> drawerItems;
   final ValueChanged<bool> onDarkModeToggle;
   final VoidCallback onLogout;
+  final String token;
 
   const CustomAppBar({
     super.key,
@@ -16,6 +18,7 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
     required this.drawerItems,
     required this.onDarkModeToggle,
     required this.onLogout,
+    required this.token,
   });
 
   @override
@@ -23,13 +26,41 @@ class CustomAppBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomAppBarState extends State<CustomAppBar> {
+  late student_details _apiService;
+  String userName = '';
+  String userId = '';
+  String userRole = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _apiService = student_details(token: widget.token, context: context);
+    fetchUserData();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _apiService = student_details(token: widget.token, context: context);
+    fetchUserData();
+  }
+
+  Future<void> fetchUserData() async {
+    var userData = await _apiService.fetchUserData();
+    setState(() {
+      userName = userData['student_name'] ?? '';
+      userId = userData['user_id'] ?? '';
+      userRole = userData['user_role'] ?? '';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppBar(
       title: Row(
         mainAxisSize: MainAxisSize.min,
         children: <Widget>[
-          _buildProfileButton(context),
+          _buildProfileButton(),
           const SizedBox(width: 10),
           Image.asset(
             'assets/logor.png',
@@ -47,7 +78,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
       ),
       backgroundColor: Colors.white,
       actions: <Widget>[
-        _buildSettingsButton(context),
+        _buildSettingsButton(),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.0),
@@ -59,7 +90,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     );
   }
 
-  IconButton _buildSettingsButton(BuildContext context) {
+  IconButton _buildSettingsButton() {
     return IconButton(
       icon: Icon(Icons.settings, color: Theme.of(context).primaryColor),
       onPressed: () {
@@ -89,7 +120,7 @@ class _CustomAppBarState extends State<CustomAppBar> {
     );
   }
 
-  GestureDetector _buildProfileButton(BuildContext context) {
+  GestureDetector _buildProfileButton() {
     return GestureDetector(
       onTap: () {
         showDialog(
@@ -100,36 +131,34 @@ class _CustomAppBarState extends State<CustomAppBar> {
                 height: 200,
                 child: Column(
                   children: <Widget>[
-                    const CircleAvatar(
+                    CircleAvatar(
                       radius: 30,
                       backgroundColor: Colors.grey,
                       child: Text(
-                        'Y',
-                        style: TextStyle(color: Colors.white),
+                        userName.isNotEmpty ? userName[0] : 'S',
+                        style: const TextStyle(color: Colors.white),
                       ),
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
-                    const Text(
-                      'Yimkumer Pongen',
-                      style:
-                          TextStyle(fontWeight: FontWeight.w400, fontSize: 20),
+                    const SizedBox(height: 15),
+                    Text(
+                      userName,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400, fontSize: 20),
                       textAlign: TextAlign.center,
                     ),
-                    const Text(
-                      'AIT22MCAV043',
-                      style: TextStyle(fontWeight: FontWeight.w300),
+                    Text(
+                      userId,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400, fontSize: 18),
                       textAlign: TextAlign.center,
                     ),
-                    const Text(
-                      'Student',
-                      style: TextStyle(fontWeight: FontWeight.w300),
+                    Text(
+                      userRole,
+                      style: const TextStyle(
+                          fontWeight: FontWeight.w400, fontSize: 15),
                       textAlign: TextAlign.center,
                     ),
-                    const SizedBox(
-                      height: 15,
-                    ),
+                    const SizedBox(height: 15),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -137,7 +166,8 @@ class _CustomAppBarState extends State<CustomAppBar> {
                         GestureDetector(
                           onTap: widget.onLogout,
                           child: const Text('Logout',
-                              style: TextStyle(color: Colors.red)),
+                              style:
+                                  TextStyle(color: Colors.red, fontSize: 18)),
                         ),
                       ],
                     ),
@@ -148,11 +178,12 @@ class _CustomAppBarState extends State<CustomAppBar> {
           },
         );
       },
-      child: const CircleAvatar(
+      child: CircleAvatar(
         backgroundColor: Colors.grey,
         child: Text(
-          'Y',
-          style: TextStyle(color: Colors.white),
+          userName.isNotEmpty ? userName[0] : 'S',
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.w400, fontSize: 15),
         ),
       ),
     );
