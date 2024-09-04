@@ -252,25 +252,29 @@ class _CalendarState extends State<Calendar> {
                                           crossAxisAlignment:
                                               CrossAxisAlignment.start,
                                           children: [
-                                            Text(
-                                              classInfo.subjectNameShort,
-                                              style: TextStyle(
-                                                fontSize: 15.0,
-                                                color: getTextColor(
-                                                    day, classInfo),
-                                                fontWeight: FontWeight.w500,
+                                            FittedBox(
+                                              child: Text(
+                                                classInfo.subjectNameShort,
+                                                style: TextStyle(
+                                                  fontSize: 14.0,
+                                                  color: getTextColor(
+                                                      day, classInfo),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                overflow: TextOverflow.clip,
                                               ),
-                                              overflow: TextOverflow.clip,
                                             ),
-                                            Text(
-                                              classInfo.interval,
-                                              style: TextStyle(
-                                                fontSize: 10.0,
-                                                color: getTextColor(
-                                                    day, classInfo),
-                                                fontWeight: FontWeight.w500,
+                                            Flexible(
+                                              child: Text(
+                                                classInfo.interval,
+                                                style: TextStyle(
+                                                  fontSize: 10.0,
+                                                  color: getTextColor(
+                                                      day, classInfo),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                                overflow: TextOverflow.clip,
                                               ),
-                                              overflow: TextOverflow.clip,
                                             ),
                                           ],
                                         ),

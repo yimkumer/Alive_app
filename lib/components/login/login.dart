@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'dart:io';
 import 'package:alive_app/components/faculty_section/faculty.dart';
 import 'package:alive_app/components/login/loading_screen.dart';

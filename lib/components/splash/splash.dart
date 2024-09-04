@@ -25,7 +25,7 @@ class Splash extends StatelessWidget {
                   width: screenWidth * 0.2,
                   height: screenWidth * 0.2,
                 ),
-                SizedBox(width: screenWidth * 0.02), // Add a small gap
+                SizedBox(width: screenWidth * 0.02),
                 Text(
                   "Alive",
                   style: TextStyle(

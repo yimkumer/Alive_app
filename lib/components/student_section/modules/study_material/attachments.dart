@@ -272,7 +272,10 @@ class _AttachmentsState extends State<Attachments> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Study Materials"),
+          title: const Text(
+            "Study Materials",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
         ),
         body: FutureBuilder<Map<String, dynamic>>(
           future: studyMaterialFuture,
